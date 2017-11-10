@@ -1,0 +1,40 @@
+{
+  "name": "wiejakp/symfonypress",
+  "description": "Integrate WordPress within Symfony",
+  "type": "project",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Przemek Wiejak",
+      "email": "wiejakp@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "wiejakp\\SymfonyPress\\Composer\\": "Composer/"
+    }
+  },
+  "require": {
+    "php": "~7.1",
+    "symfony/symfony": "^3.3",
+    "wp-cli/wp-cli": "dev-master"
+  },
+  "require-dev": {
+    "composer/composer": "dev-master"
+  },
+  "scripts": {
+    "symfonypress-update": [
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony"
+    ],
+    "post-update-cmd": [
+      "@symfonypress-update"
+    ]
+  },
+  "extra": {
+    "symfonypress-symfony-dir": "symfony",
+    "symfonypress-symfony-version": "symfony/framework-standard-edition",
+    "symfonypress-wordpress-dir": "wordpress"
+  }
+}
