@@ -11,30 +11,93 @@
   ],
   "autoload": {
     "psr-4": {
-      "wiejakp\\SymfonyPress\\Composer\\": "Composer/"
+      "wiejakp\\SymfonyPress\\Composer\\": "composer/"
     }
   },
   "require": {
-    "php": "~7.1",
-    "symfony/symfony": "^3.3",
-    "wp-cli/wp-cli": "dev-master"
+    "php": "~7.1"
   },
   "require-dev": {
-    "composer/composer": "dev-master"
+    "composer/composer": "dev-master",
+    "symfony/yaml": "^3.0",
+    "wp-cli/wp-cli": "dev-master"
   },
   "scripts": {
-    "symfonypress-update": [
+    "symfonypress-install": [
+      "wiejakp\\SymfonyPress\\Composer\\Installer::input",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony"
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress"
+    ],
+    "symfonypress-update": [
+      "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_symlinks",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config"
     ],
     "post-update-cmd": [
+      "@symfonypress-install",
       "@symfonypress-update"
     ]
   },
   "extra": {
-    "symfonypress-symfony-dir": "symfony",
-    "symfonypress-symfony-version": "symfony/framework-standard-edition",
-    "symfonypress-wordpress-dir": "wordpress"
+    "dir": "config/",
+    "filename": "settings.yml",
+    "symfony": {
+      "dir": "symfony/",
+      "config": "app/config/",
+      "filename": "parameters.yml",
+      "version": "symfony/framework-standard-edition",
+      "require": [
+        {
+          "user": "wiejakp",
+          "title": "wordpress-bundle",
+          "version": "dev-master",
+          "type": "vcs",
+          "url": "https://github.com/wiejakp/WordPressBundle"
+        }
+      ],
+      "symlink": [
+        {
+          "input_filename": "*",
+          "input_dir": "shared/symfony/Command/",
+          "output_dir": "src/AppBundle/Command/",
+          "command": "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+        }
+      ],
+      "append": [
+        {
+          "source": "composer/config/symfony/config.yml",
+          "destination": "app/config/config.yml"
+        },
+        {
+          "source": "composer/config/symfony/routing.yml",
+          "destination": "app/config/routing.yml"
+        }
+      ],
+      "replace": [
+        {
+          "source": "composer/config/symfony/security.yml",
+          "destination": "app/config/security.yml"
+        }
+      ]
+    },
+    "wordpress": {
+      "dir": "wordpress/",
+      "config": "",
+      "filename": "wp-config.php",
+      "symlink": [
+        {
+          "input_filename": "index.php",
+          "input_dir": "shared/wordpress/",
+          "output_dir": ""
+        },
+        {
+          "input_filename": ".htaccess",
+          "input_dir": "shared/wordpress/",
+          "output_dir": ""
+        }
+      ]
+    }
   }
 }

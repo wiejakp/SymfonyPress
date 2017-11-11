@@ -1,0 +1,2 @@
+ekino_wordpress:
+    resource: '@EkinoWordpressBundle/Resources/config/routing.xml'
