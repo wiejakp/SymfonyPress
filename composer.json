@@ -15,9 +15,11 @@
     }
   },
   "require": {
-    "php": "~7.1",
+    "php": "~7.1"
+  },
+  "require-dev": {
     "composer/composer": "dev-master",
-    "symfony/yaml": "dev-master",
+    "symfony/yaml": "^3.0",
     "wp-cli/wp-cli": "dev-master"
   },
   "scripts": {
@@ -30,14 +32,9 @@
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress"
     ],
-    "pre-install-cmd": [
-      "@symfonypress-install"
-    ],
-    "post-install-cmd": [
-      "@symfonypress-install"
-    ],
     "post-update-cmd": [
-      "@symfonypress-install"
+      "@symfonypress-install",
+      "@symfonypress-update"
     ]
   },
   "extra": {
@@ -47,7 +44,16 @@
       "dir": "symfony/",
       "config": "app/config/",
       "filename": "parameters.yml",
-      "version": "symfony/framework-standard-edition"
+      "version": "symfony/framework-standard-edition",
+      "require": [
+        {
+          "user": "wiejakp",
+          "title": "wordpress-bundle",
+          "version": "dev-master",
+          "type": "vcs",
+          "url": "https://github.com/wiejakp/WordPressBundle"
+        }
+      ]
     },
     "wordpress": {
       "dir": "wordpress/",
