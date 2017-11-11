@@ -266,7 +266,7 @@ class Installer
             $input_file = $symlink['input_filename'];
             $input_dir = $symlink['input_dir'];
             $output_dir = $symlink['output_dir'];
-            $command = $symlink['command'];
+            $command = "$console " . $symlink['command'];
 
             $abs_root = self::$ROOT . $root;
             $abs_input = self::$ROOT . $input_dir . $input_file;
@@ -280,17 +280,54 @@ class Installer
                 $base = basename($file);
                 $link = $abs_root . $output_dir . $base;
 
-                if(file_exists($link)) {
+                if (file_exists($link)) {
                     unlink($link);
                 }
 
-                var_dump($file);
-                var_dump($link);
+                $io->write(":\n\r: SymLink Source: $file");
+                $io->write(": SymLink Destination: $link");
 
                 symlink($file, $link);
             }
 
-            exec("$console $command");
+            $io->write(":\n\r: Command: $command");
+
+            exec($command);
+        }
+
+        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+    }
+
+    /**
+     * @param Event $event
+     */
+    protected static function install_symfony_config(Event $event): void
+    {
+        // local vars
+        $function = __FUNCTION__;
+
+        // input/output handler
+        $io = $event->getIO();
+
+        $config = self::$CONFIG['symfony'];
+        $appends = $config['append'];
+        $replace = $config['replace'];
+
+        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+
+        // install symlinks
+        foreach ($appends as $append) {
+            $source = self::$ROOT . $append['source'];
+            $destination = self::$ROOT . $config['dir'] . $append['destination'];
+
+            $array_source = Yaml::parse(file_get_contents($source));
+            $array_destination = Yaml::parse(file_get_contents($destination));
+
+            if (!array_key_exists(key($array_source), $array_destination)) {
+                $array_merged = array_merge($array_destination, $array_source);
+
+                file_put_contents($destination, Yaml::dump($array_merged, 10));
+            }
         }
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
@@ -438,16 +475,14 @@ class Installer
                 $base = basename($file);
                 $link = $abs_root . $output_dir . $base;
 
-                var_dump($link);
-
-                if(file_exists($link)) {
-                    //unlink($link);
+                if (file_exists($link)) {
+                    unlink($link);
                 }
 
                 var_dump($file);
                 var_dump($link);
 
-                //symlink($file, $link);
+                symlink($file, $link);
             }
         }
 

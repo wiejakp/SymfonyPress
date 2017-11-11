@@ -52,21 +52,23 @@ class BundleEnableCommand extends Command
 
         $namespace = $input->getArgument('namespace');
         $appContent = file_get_contents($this->kernel);
-        $newBundle = "new {$namespace}(),";
+        $newBundle = "new {$namespace}()";
         $pattern = '/\$bundles\s?=\s?\\' . $array_open . '(.*?)\\' . $array_close . ';/is';
 
         preg_match($pattern, $appContent, $matches);
 
         $bList = rtrim($matches[1], "\n ");
-        $e = explode(",", $bList);
-        $firstBundle = array_shift($e);
-        $tabs = substr_count($firstBundle, '    ');
+        $bArray = array_map('trim', explode(",", $bList));
 
-        $newBList = "\$bundles = $array_open"
-            . $bList . "\n"
-            . str_repeat('    ', $tabs) . $newBundle . "\n"
-            . str_repeat('    ', $tabs - 1) . "$array_close;";
+        if (!in_array($newBundle, $bArray)) {
+            $tabs = 3;
 
-        file_put_contents($this->kernel, preg_replace($pattern, $newBList, $appContent));
+            $newBList = "\$bundles = $array_open"
+                . $bList . "\n"
+                . str_repeat('    ', $tabs) . $newBundle . ",\n"
+                . str_repeat('    ', $tabs - 1) . "$array_close;";
+
+            file_put_contents($this->kernel, preg_replace($pattern, $newBList, $appContent));
+        }
     }
 }

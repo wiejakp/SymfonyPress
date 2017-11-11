@@ -11,7 +11,7 @@
   ],
   "autoload": {
     "psr-4": {
-      "wiejakp\\SymfonyPress\\Composer\\": "Composer/"
+      "wiejakp\\SymfonyPress\\Composer\\": "composer/"
     }
   },
   "require": {
@@ -32,7 +32,8 @@
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_symlinks",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks"
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config"
     ],
     "post-update-cmd": [
       "@symfonypress-install",
@@ -59,9 +60,25 @@
       "symlink": [
         {
           "input_filename": "*",
-          "input_dir": "symlink/symfony/Command/",
+          "input_dir": "shared/symfony/Command/",
           "output_dir": "src/AppBundle/Command/",
           "command": "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+        }
+      ],
+      "append": [
+        {
+          "source": "composer/config/symfony/config.yml",
+          "destination": "app/config/config.yml"
+        },
+        {
+          "source": "composer/config/symfony/routing.yml",
+          "destination": "app/config/routing.yml"
+        }
+      ],
+      "replace": [
+        {
+          "source": "composer/config/symfony/security.yml",
+          "destination": "app/config/security.yml"
         }
       ]
     },
@@ -72,7 +89,12 @@
       "symlink": [
         {
           "input_filename": "index.php",
-          "input_dir": "symlink/wordpress/",
+          "input_dir": "shared/wordpress/",
+          "output_dir": ""
+        },
+        {
+          "input_filename": ".htaccess",
+          "input_dir": "shared/wordpress/",
           "output_dir": ""
         }
       ]
