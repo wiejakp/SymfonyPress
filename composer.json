@@ -30,7 +30,9 @@
     ],
     "symfonypress-update": [
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress"
+      "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_symlinks",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks"
     ],
     "post-update-cmd": [
       "@symfonypress-install",
@@ -53,12 +55,27 @@
           "type": "vcs",
           "url": "https://github.com/wiejakp/WordPressBundle"
         }
+      ],
+      "symlink": [
+        {
+          "input_filename": "*",
+          "input_dir": "symlink/symfony/Command/",
+          "output_dir": "src/AppBundle/Command/",
+          "command": "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+        }
       ]
     },
     "wordpress": {
       "dir": "wordpress/",
       "config": "",
-      "filename": "wp-config.php"
+      "filename": "wp-config.php",
+      "symlink": [
+        {
+          "input_filename": "index.php",
+          "input_dir": "symlink/wordpress/",
+          "output_dir": ""
+        }
+      ]
     }
   }
 }

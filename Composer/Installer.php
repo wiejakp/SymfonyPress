@@ -6,7 +6,6 @@ namespace wiejakp\SymfonyPress\Composer;
 use \Exception;
 
 // composer classes
-use Composer\IO\IOInterface;
 use Composer\Script\Event;
 
 // symfony classes
@@ -67,6 +66,9 @@ class Installer
         forward_static_call_array([self::class, $method], $args);
     }
 
+    /**
+     * @param Event $event
+     */
     protected static function input(Event $event): void
     {
         // local vars
@@ -135,6 +137,9 @@ class Installer
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
+    /**
+     * @param Event $event
+     */
     protected static function install_symfony(Event $event): void
     {
         // local vars
@@ -212,6 +217,9 @@ class Installer
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
+    /**
+     * @param Event $event
+     */
     protected static function update_symfony(Event $event): void
     {
         // local vars
@@ -235,6 +243,62 @@ class Installer
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
+    /**
+     * @param Event $event
+     */
+    protected static function install_symfony_symlinks(Event $event): void
+    {
+        // local vars
+        $function = __FUNCTION__;
+
+        // input/output handler
+        $io = $event->getIO();
+
+        $config = self::$CONFIG['symfony'];
+        $console = self::$ROOT . $config['dir'] . 'bin/console';
+        $symlinks = $config['symlink'];
+
+        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+
+        // install symlinks
+        foreach ($symlinks as $symlink) {
+            $root = $config['dir'];
+            $input_file = $symlink['input_filename'];
+            $input_dir = $symlink['input_dir'];
+            $output_dir = $symlink['output_dir'];
+            $command = $symlink['command'];
+
+            $abs_root = self::$ROOT . $root;
+            $abs_input = self::$ROOT . $input_dir . $input_file;
+            $abs_output = $abs_root . $output_dir;
+
+            if (!file_exists($abs_output)) {
+                mkdir($abs_output);
+            }
+
+            foreach (glob($abs_input) as $file) {
+                $base = basename($file);
+                $link = $abs_root . $output_dir . $base;
+
+                if(file_exists($link)) {
+                    unlink($link);
+                }
+
+                var_dump($file);
+                var_dump($link);
+
+                symlink($file, $link);
+            }
+
+            exec("$console $command");
+        }
+
+        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+    }
+
+    /**
+     * @param Event $event
+     */
     protected static function install_wordpress(Event $event): void
     {
         // local vars
@@ -313,6 +377,9 @@ class Installer
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
+    /**
+     * @param Event $event
+     */
     protected static function update_wordpress(Event $event): void
     {
         // local vars
@@ -336,8 +403,54 @@ class Installer
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
-    protected static function save_input(Event $event, array $data): void
+    /**
+     * @param Event $event
+     */
+    protected static function install_wordpress_symlinks(Event $event): void
     {
+        // local vars
+        $function = __FUNCTION__;
 
+        // input/output handler
+        $io = $event->getIO();
+
+        $config = self::$CONFIG['wordpress'];
+        $symlinks = $config['symlink'];
+
+        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+
+        // install symlinks
+        foreach ($symlinks as $symlink) {
+            $root = $config['dir'];
+            $input_file = $symlink['input_filename'];
+            $input_dir = $symlink['input_dir'];
+            $output_dir = $symlink['output_dir'];
+
+            $abs_root = self::$ROOT . $root;
+            $abs_input = self::$ROOT . $input_dir . $input_file;
+            $abs_output = $abs_root . $output_dir;
+
+            if (!file_exists($abs_output)) {
+                mkdir($abs_output);
+            }
+
+            foreach (glob($abs_input) as $file) {
+                $base = basename($file);
+                $link = $abs_root . $output_dir . $base;
+
+                var_dump($link);
+
+                if(file_exists($link)) {
+                    //unlink($link);
+                }
+
+                var_dump($file);
+                var_dump($link);
+
+                //symlink($file, $link);
+            }
+        }
+
+        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 }
