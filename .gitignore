@@ -46,3 +46,6 @@
 /symfony/
 /wordpress/
 /config/
+
+# ignore composer.lock
+composer.lock
