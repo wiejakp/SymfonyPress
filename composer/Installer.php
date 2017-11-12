@@ -77,7 +77,6 @@ class Installer
         // store all information in following file
         $settings_dir = self::$CONFIG['dir'];
         $settings_path = $settings_dir . self::$CONFIG['filename'];
-        $settings_full_path = self::$ROOT . $settings_path;
 
         // input/output handler
         $io = $event->getIO();
@@ -85,9 +84,7 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         // if settings already exist, skip input prompts
-        if (file_exists($settings_path)) {
-            $io->write(":\n\r: Existing Config: $settings_path\n\r:\n\r:");
-        } else {
+        if (!file_exists($settings_path)) {
             // store all user inputs
             $data = [];
             $params = &$data['parameters'];
@@ -96,41 +93,45 @@ class Installer
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
 
-            $io->write(": Server Information\n\r:");
+            $io->write(": [ ! ] Server Information\n\r:");
 
-            $params['database_host'] = $io->ask(": Database Host [localhost]: ", 'localhost');
-            $params['database_port'] = $io->ask(": Database Port [3306]: ", '3306');
-            $params['database_name'] = $io->ask(": Database Name [symfonypress]: ", 'symfonypress');
-            $params['database_user'] = $io->ask(": Database User [symfonypress]: ", 'symfonypress');
-            $params['database_password'] = $io->ask(": Database Password [symfonypress]: ", 'symfonypress');
-            $params['database_prefix'] = $io->ask(": Database Prefix [wp_]: ", 'wp_');
-            $params['database_charset'] = $io->ask(": Database Char Set [utf8]: ", 'utf8');
-            $params['mailer_transport'] = $io->ask(": E-Mail Protocol [smtp]: ", 'smtp');
-            $params['mailer_host'] = $io->ask(": E-Mail Host [127.0.0.1]: ", '127.0.0.1');
-            $params['mailer_user'] = $io->ask(": E-Mail User [null]: ", 'null');
-            $params['mailer_password'] = $io->ask(": E-Mail Password [null]: ", 'null');
-            $params['secret'] = $io->ask(": Secret Token [$secret]: ", $secret);
+            $params['database_host'] = $io->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
+            $params['database_port'] = $io->ask(": [ ? ] Database Port [3306]: ", '3306');
+            $params['database_name'] = $io->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
+            $params['database_user'] = $io->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
+            $params['database_password'] = $io->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
+            $params['database_prefix'] = $io->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
+            $params['database_charset'] = $io->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
+            $params['mailer_transport'] = $io->ask(": [ ? ] E-Mail Protocol [smtp]: ", 'smtp');
+            $params['mailer_host'] = $io->ask(": [ ? ] E-Mail Host [127.0.0.1]: ", '127.0.0.1');
+            $params['mailer_user'] = $io->ask(": [ ? ] E-Mail User [null]: ", 'null');
+            $params['mailer_password'] = $io->ask(": [ ? ] E-Mail Password [null]: ", 'null');
+            $params['secret'] = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
 
-            $io->write(":\n\r:\n\r: Web Site Information\n\r:");
+            $io->write(":\n\r:\n\r: [ ! ] Web Site Information\n\r:");
 
-            $project['url'] = $io->ask(": Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
-            $project['title'] = $io->ask(": Web Site Title [SymfonyPress]: ", 'SymfonyPress');
+            $project['url'] = $io->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
+            $project['title'] = $io->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
 
-            $io->write(":\n\r:\n\r: Administrator User Information\n\r:");
+            $io->write(":\n\r:\n\r: [ ! ] Administrator User Information\n\r:");
 
-            $project['mail'] = $io->ask(": Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
-            $project['user'] = $io->ask(": Admin User Name [symfonypress]: ", 'symfonypress');
-            $project['pass'] = $io->ask(": Admin Password [symfonypress]: ", 'symfonypress');
+            $project['mail'] = $io->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
+            $project['user'] = $io->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
+            $project['pass'] = $io->ask(": [ ? ] Admin Password [symfonypress]: ", 'symfonypress');
 
-            // save settings into a file
+            $io->write(":");
+
             try {
-                $io->write(":\n\r:\n\r: Settings Saved At: $settings_full_path\n\r:");
+                $string_yaml = Yaml::dump($data);
+                $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
-                file_put_contents($settings_path, Yaml::dump($data));
+                $io->write(": [ + ] echo '$string_encoded' | tee '$settings_path'");
+
+                file_put_contents($settings_path, $string_yaml);
             } catch (Exception $exception) {
                 $error = $exception->getMessage();
 
-                $io->write("\n\r: ERROR: $error\n\r");
+                $io->write(": [ - ] ERROR: $error");
             }
         }
 
@@ -160,10 +161,11 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (!is_dir($config_system['dir'])) {
-            $io->write(": Installing Symfony: " . self::$ROOT . $config_location);
+            $cmd_create = "composer create-project '$config_version' '$config_location' -q";
 
-            // create new project
-            exec("composer create-project '$config_version' '$config_location' -q;");
+            $io->write(": [ + ] $cmd_create");
+
+            exec($cmd_create);
 
             if (array_key_exists('require', $config_system)) {
                 foreach ($config_system['require'] as $require) {
@@ -177,42 +179,35 @@ class Installer
                     $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' -q -d '$config_absolute'";
                     $cmd_require = "composer require $repo_name '$repo_version' -q -d '$config_absolute'";
 
-                    $io->write(": + Repository: $cmd_repository");
+                    $io->write(": [ + ] $cmd_repository");
                     exec($cmd_repository);
 
-                    $io->write(": + Require: $cmd_require");
+                    $io->write(": [ + ] $cmd_require");
                     exec($cmd_require);
                 }
             }
-        } else {
-            $io->write(": Symfony Already Installed: " . self::$ROOT . $config_location);
         }
 
         if (!file_exists($config_physical)) {
-            $io->write(": Generating Symfony Parameters: $config_physical");
-
-            file_put_contents($config_physical, Yaml::dump([
+            $string_yaml = Yaml::dump([
                 'parameters' => self::$SETTINGS['parameters']
-            ]));
-        } else {
-            $io->write(": Symfony Parameters Found: $config_physical");
+            ]);
+            $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
+
+            $io->write(": [ + ] echo '$string_encoded' | tee '$config_physical'");
+
+            file_put_contents($config_physical, $string_yaml);
         }
 
         if (file_exists($config_virtual)) {
-            if (is_link($config_virtual)) {
-                $io->write(": UnLinking Old Settings: $config_virtual");
-            } else {
-                $io->write(": Removing Old Settings: $config_virtual");
-            }
+            $io->write(": [ - ] unlink '$config_virtual'");
 
             unlink($config_virtual);
         }
 
-        $io->write(":\n\r: SymLink Source: $config_physical");
-        $io->write(": SymLink Destination: $config_virtual");
+        $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
         symlink($config_physical, $config_virtual);
-
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
@@ -235,9 +230,11 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (is_dir($config_location)) {
-            $io->write(": Updating Symfony: " . self::$ROOT . $config_location);
+            $cmd_update = "composer update -d '$config_location' -q";
 
-            exec("composer update -d '$config_location' -q");
+            $io->write(": [ + ] $cmd_update");
+
+            exec($cmd_update);
         }
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
@@ -273,6 +270,8 @@ class Installer
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
+                $io->write(": [ + ] mkdir '$abs_output'");
+
                 mkdir($abs_output);
             }
 
@@ -281,16 +280,17 @@ class Installer
                 $link = $abs_root . $output_dir . $base;
 
                 if (file_exists($link)) {
+                    $io->write(": [ - ] unlink '$link'");
+
                     unlink($link);
                 }
 
-                $io->write(":\n\r: SymLink Source: $file");
-                $io->write(": SymLink Destination: $link");
+                $io->write(": [ + ] ln -s '$file' '$link'");
 
                 symlink($file, $link);
             }
 
-            $io->write(":\n\r: Command: $command");
+            $io->write(": [ + ] $command");
 
             exec($command);
         }
@@ -315,20 +315,59 @@ class Installer
 
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
-        // install symlinks
-        foreach ($appends as $append) {
-            $source = self::$ROOT . $append['source'];
-            $destination = self::$ROOT . $config['dir'] . $append['destination'];
+        foreach ($appends as $file) {
+            $dir_source = self::$ROOT . $file['source'];
+            $dir_destination = self::$ROOT . $config['dir'] . $file['destination'];
 
-            $array_source = Yaml::parse(file_get_contents($source));
-            $array_destination = Yaml::parse(file_get_contents($destination));
+            $array_source = Yaml::parse(file_get_contents($dir_source));
+            $array_destination = Yaml::parse(file_get_contents($dir_destination));
 
             if (!array_key_exists(key($array_source), $array_destination)) {
                 $array_merged = array_merge($array_destination, $array_source);
+                $string_yaml = Yaml::dump($array_merged, 10);
+                $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
-                file_put_contents($destination, Yaml::dump($array_merged, 10));
+                $io->write(": [ + ] echo '$string_encoded' | tee '$dir_destination'");
+
+                file_put_contents($dir_destination, $string_yaml);
             }
         }
+
+        foreach ($replace as $file) {
+            $dir_source = self::$ROOT . $file['source'];
+            $dir_destination = self::$ROOT . $config['dir'] . $file['destination'];
+
+            $array_source = Yaml::parse(file_get_contents($dir_source));
+
+            if (!array_key_exists(key($array_source), $array_destination)) {
+                $yamp_string = Yaml::dump($array_source, 10);
+                $yamp_encoded = filter_var($yamp_string, FILTER_SANITIZE_ENCODED);
+
+                $io->write(": [ + ] echo '$yamp_encoded' | tee '$dir_destination'");
+
+                file_put_contents($dir_destination, $yamp_string);
+            }
+        }
+
+        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+    }
+
+    /**
+     * @param Event $event
+     */
+    protected static function install_symfony_permissions(Event $event): void
+    {
+        // local vars
+        $function = __FUNCTION__;
+
+        // input/output handler
+        $io = $event->getIO();
+
+        $config = self::$CONFIG['symfony'];
+
+        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+
+        $cmd_chown = ": [ + ] chown ";
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
@@ -354,30 +393,21 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (!is_dir($config_location)) {
-            $io->write(": Downloading WordPress: " . self::$ROOT . $config_location);
+            $cmd_download = "wp core download --path='$config_location'";
 
-            // download wp files
-            exec("wp core download --path='$config_location';");
-        } else {
-            $io->write(": WordPress Already Downloaded: " . self::$ROOT . $config_location);
+            $io->write(": [ + ] $cmd_download");
+
+            exec($cmd_download);
         }
 
         if (file_exists($config_virtual)) {
-            if (is_link($config_virtual)) {
-                $io->write(": UnLinking Old Settings: $config_virtual");
-            } else {
-                $io->write(": Removing Old Settings: $config_virtual");
-            }
+            $io->write(": [ - ] unlink '$config_virtual'");
 
             unlink($config_virtual);
         }
 
-        if (file_exists($config_physical)) {
-            $io->write(": WordPress Config File Found: " . $config_physical);
-        } else {
-            $io->write(": Generating WordPress Config File: " . $config_virtual);
-
-            exec(implode(' ', [
+        if (!file_exists($config_physical)) {
+            $cmd_config = implode(' ', [
                 "wp config create",
                 "--path='" . $config_location . "'",
                 "--dbname='" . self::$SETTINGS['parameters']['database_name'] . "'",
@@ -386,21 +416,20 @@ class Installer
                 "--dbhost='" . self::$SETTINGS['parameters']['database_host'] . "'",
                 "--dbprefix='" . self::$SETTINGS['parameters']['database_prefix'] . "'",
                 "--dbcharset='" . self::$SETTINGS['parameters']['database_charset'] . "'"
-            ]));
+            ]);
 
-            $io->write(": Moving New Config To: " . $config_physical);
+            $io->write(": [ + ] $cmd_config");
+
+            exec($cmd_config);
 
             rename($config_virtual, $config_physical);
         }
 
-        $io->write(":\n\r: SymLink Source: $config_physical");
-        $io->write(": SymLink Destination: $config_virtual");
+        $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
         symlink($config_physical, $config_virtual);
 
-        $io->write(":\n\r: Setting Up WordPress Site: $config_virtual");
-
-        exec(implode(' ', [
+        $cmd_core = implode(' ', [
             "wp core install",
             "--path='" . $config_location . "'",
             "--url='" . self::$SETTINGS['project']['url'] . "'",
@@ -409,7 +438,11 @@ class Installer
             "--admin_password='" . self::$SETTINGS['project']['pass'] . "'",
             "--admin_email='" . self::$SETTINGS['project']['mail'] . "'",
             "--skip-email"
-        ]));
+        ]);
+
+        $io->write(": [ + ] $cmd_core");
+
+        exec($cmd_core);
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
@@ -432,9 +465,11 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (is_dir($config_location)) {
-            $io->write(": Updating WordPress Core: " . self::$ROOT . $config_location);
+            $cmd_update = "wp core update --path='$config_location'";
 
-            exec("wp core update --path='$config_location'");
+            $io->write(": [ + ] $cmd_update");
+
+            exec($cmd_update);
         }
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
@@ -468,6 +503,8 @@ class Installer
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
+                $io->write(": [ + ] mkdir $abs_output");
+
                 mkdir($abs_output);
             }
 
@@ -476,11 +513,12 @@ class Installer
                 $link = $abs_root . $output_dir . $base;
 
                 if (file_exists($link)) {
+                    $io->write(": [ - ] unlink $link");
+
                     unlink($link);
                 }
 
-                var_dump($file);
-                var_dump($link);
+                $io->write(": [ + ] ln -s '$file' '$link'");
 
                 symlink($file, $link);
             }
