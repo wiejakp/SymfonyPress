@@ -264,7 +264,7 @@ class Installer
             $input_file = $symlink['input_filename'];
             $input_dir  = $symlink['input_dir'];
             $output_dir = $symlink['output_dir'];
-            $command    = "$console " . $symlink['command'];
+            $command    = array_key_exists('command', $symlink) ? "$console " . $symlink['command'] : null;
 
             $abs_root   = self::$ROOT . $root;
             $abs_input  = self::$ROOT . $input_dir . $input_file;
@@ -292,9 +292,11 @@ class Installer
                 symlink($file, $link);
             }
 
-            $io->write(": [ + ] $command");
+            if ($command) {
+                $io->write(": [ + ] $command");
 
-            exec($command);
+                exec($command);
+            }
         }
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
