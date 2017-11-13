@@ -93,7 +93,7 @@ class Installer
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
 
-            $io->write(": [ ! ] Server Information");
+            $io->write(": [ ! ] Server Information\n\r:");
 
             $params['database_host']     = $io->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
             $params['database_port']     = $io->ask(": [ ? ] Database Port [3306]: ", '3306');
@@ -108,12 +108,12 @@ class Installer
             $params['mailer_password']   = $io->ask(": [ ? ] Mail Server Password [null]: ", 'null');
             $params['secret']            = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
 
-            $io->write(":\n\r:\n\r: [ ! ] Web Site Information");
+            $io->write(":\n\r:\n\r: [ ! ] Web Site Information\n\r:");
 
             $project['url']   = $io->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
             $project['title'] = $io->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
 
-            $io->write(":\n\r:\n\r: [ ! ] Administrator User Information");
+            $io->write(":\n\r:\n\r: [ ! ] Administrator User Information\n\r:");
 
             $project['mail'] = $io->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
             $project['user'] = $io->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
@@ -158,7 +158,7 @@ class Installer
         $config_physical = self::$ROOT . self::$CONFIG['dir'] . $config_filename;
         $config_virtual  = self::$ROOT . $config_location . $config_system['config'] . $config_filename;
 
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+        $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         if (!is_dir($config_system['dir'])) {
             $cmd_create = "composer create-project '$config_version' '$config_location' -q";
@@ -199,16 +199,11 @@ class Installer
             file_put_contents($config_physical, $string_yaml);
         }
 
-        if (file_exists($config_virtual)) {
-            $io->write(": [ - ] unlink '$config_virtual'");
+        if (!file_exists($config_virtual)) {
+            $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
-            //unlink($config_virtual);
-            unlink(realpath($config_virtual));
+            symlink($config_physical, $config_virtual);
         }
-
-        $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
-
-        symlink($config_physical, $config_virtual);
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
@@ -280,16 +275,11 @@ class Installer
                 $base = basename($file);
                 $link = $abs_root . $output_dir . $base;
 
-                if (file_exists($link)) {
-                    $io->write(": [ - ] unlink '$link'");
+                if (!file_exists($link)) {
+                    $io->write(": [ + ] ln -s '$file' '$link'");
 
-                    //unlink($link);
-                    unlink(realpath($link));
+                    symlink($file, $link);
                 }
-
-                $io->write(": [ + ] ln -s '$file' '$link'");
-
-                symlink($file, $link);
             }
 
             if ($command) {
@@ -497,15 +487,10 @@ class Installer
                 $link = $abs_root . $output_dir . $base;
 
                 if (file_exists($link)) {
-                    $io->write(": [ - ] unlink $link");
+                    $io->write(": [ + ] ln -s '$file' '$link'");
 
-                    //unlink($link);
-                    unlink(realpath($link));
+                    symlink($file, $link);
                 }
-
-                $io->write(": [ + ] ln -s '$file' '$link'");
-
-                symlink($file, $link);
             }
         }
 
