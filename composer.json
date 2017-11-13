@@ -62,7 +62,7 @@
         },
         {
           "input_filename": "*",
-          "input_dir": "shared/symfony/src/Controller/Controller/",
+          "input_dir": "shared/symfony/src/AppBundle/Controller/",
           "output_dir": "src/AppBundle/Controller/"
         }
       ],
