@@ -199,11 +199,15 @@ class Installer
             file_put_contents($config_physical, $string_yaml);
         }
 
-        if (!file_exists($config_virtual)) {
-            $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
-
-            symlink($config_physical, $config_virtual);
+        if (file_exists($config_virtual)) {
+            if (is_link($config_virtual)) {
+                $io->write(": [ - ] unlink '$config_virtual'");
+            }
         }
+
+        $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
+
+        symlink($config_physical, $config_virtual);
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
@@ -487,6 +491,12 @@ class Installer
                 $link = $abs_root . $output_dir . $base;
 
                 if (file_exists($link)) {
+                    if (!is_link($link)) {
+                        $io->write(": [ - ] unlink '$link'");
+
+                        unlink($link);
+                    }
+
                     $io->write(": [ + ] ln -s '$file' '$link'");
 
                     symlink($file, $link);
