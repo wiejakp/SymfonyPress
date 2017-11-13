@@ -54,7 +54,7 @@ class Installer
 
             // create config directory when it doesn't exist
             if (!is_dir($settings_dir)) {
-                mkdir($settings_dir);
+                mkdir($settings_dir, 0777, true);
             }
 
             // parse settings if they are already set
@@ -93,7 +93,7 @@ class Installer
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
 
-            $io->write(": [ ! ] Server Information\n\r:");
+            $io->write(": [ ! ] Server Information");
 
             $params['database_host']     = $io->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
             $params['database_port']     = $io->ask(": [ ? ] Database Port [3306]: ", '3306');
@@ -108,12 +108,12 @@ class Installer
             $params['mailer_password']   = $io->ask(": [ ? ] Mail Server Password [null]: ", 'null');
             $params['secret']            = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
 
-            $io->write(":\n\r:\n\r: [ ! ] Web Site Information\n\r:");
+            $io->write(":\n\r:\n\r: [ ! ] Web Site Information");
 
             $project['url']   = $io->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
             $project['title'] = $io->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
 
-            $io->write(":\n\r:\n\r: [ ! ] Administrator User Information\n\r:");
+            $io->write(":\n\r:\n\r: [ ! ] Administrator User Information");
 
             $project['mail'] = $io->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
             $project['user'] = $io->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
@@ -271,9 +271,9 @@ class Installer
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
-                $io->write(": [ + ] mkdir '$abs_output'");
+                $io->write(": [ + ] mkdir '$abs_output' 0777, true");
 
-                mkdir($abs_output);
+                mkdir($abs_output, 0777, true);
             }
 
             foreach (glob($abs_input) as $file) {
@@ -352,26 +352,6 @@ class Installer
                 file_put_contents($dir_destination, $yamp_string);
             }
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
-    }
-
-    /**
-     * @param Event $event
-     */
-    protected static function install_symfony_permissions(Event $event): void
-    {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
-
-        $config = self::$CONFIG['symfony'];
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
-
-        $cmd_chown = ": [ + ] chown ";
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
@@ -507,9 +487,9 @@ class Installer
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
-                $io->write(": [ + ] mkdir $abs_output");
+                $io->write(": [ + ] mkdir('$abs_output', 0777, true)");
 
-                mkdir($abs_output);
+                mkdir($abs_output, 0777, true);
             }
 
             foreach (glob($abs_input) as $file) {
