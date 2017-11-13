@@ -102,10 +102,10 @@ class Installer
             $params['database_password'] = $io->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
             $params['database_prefix']   = $io->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
             $params['database_charset']  = $io->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
-            $params['mailer_transport']  = $io->ask(": [ ? ] E-Mail Protocol [smtp]: ", 'smtp');
-            $params['mailer_host']       = $io->ask(": [ ? ] E-Mail Host [127.0.0.1]: ", '127.0.0.1');
-            $params['mailer_user']       = $io->ask(": [ ? ] E-Mail User [null]: ", 'null');
-            $params['mailer_password']   = $io->ask(": [ ? ] E-Mail Password [null]: ", 'null');
+            $params['mailer_transport']  = $io->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
+            $params['mailer_host']       = $io->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
+            $params['mailer_user']       = $io->ask(": [ ? ] Mail Server User [null]: ", 'null');
+            $params['mailer_password']   = $io->ask(": [ ? ] Mail Server Password [null]: ", 'null');
             $params['secret']            = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
 
             $io->write(":\n\r:\n\r: [ ! ] Web Site Information\n\r:");
