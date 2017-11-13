@@ -60,9 +60,14 @@
       "symlink": [
         {
           "input_filename": "*",
-          "input_dir": "shared/symfony/Command/",
+          "input_dir": "shared/symfony/src/AppBundle/Command/",
           "output_dir": "src/AppBundle/Command/",
           "command": "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+        },
+        {
+          "input_filename": "*",
+          "input_dir": "shared/symfony/src/Controller/Controller/",
+          "output_dir": "src/AppBundle/Controller/"
         }
       ],
       "append": [
@@ -79,16 +84,6 @@
         {
           "source": "composer/config/symfony/security.yml",
           "destination": "app/config/security.yml"
-        }
-      ],
-      "scripts": [
-        {
-          "dir": "var/",
-          "scripts": [
-            "HTTPDUSER=$(ps axo user,comm | grep -E '[a]pache|[h]ttpd|[_]www|[w]ww-data|[n]ginx' | grep -v root | head -1 | cut -d -f1)",
-            "chmod +a '$HTTPDUSER allow delete,write,append,file_inherit,directory_inherit' var",
-            "chmod +a '$(whoami) allow delete,write,append,file_inherit,directory_inherit' var"
-          ]
         }
       ]
     },
