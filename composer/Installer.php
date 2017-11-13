@@ -200,8 +200,10 @@ class Installer
         }
 
         if (file_exists($config_virtual)) {
-            if (is_link($config_virtual)) {
+            if (!is_link($config_virtual)) {
                 $io->write(": [ - ] unlink '$config_virtual'");
+
+                unlink($config_virtual);
             }
         }
 
