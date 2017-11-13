@@ -64,6 +64,11 @@
           "input_filename": "*",
           "input_dir": "shared/symfony/src/AppBundle/Controller/",
           "output_dir": "src/AppBundle/Controller/"
+        },
+        {
+          "input_filename": "*",
+          "input_dir": "shared/symfony/src/AppBundle/Resources/views/",
+          "output_dir": "src/AppBundle/Resources/views/"
         }
       ],
       "append": [

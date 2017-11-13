@@ -1,0 +1,26 @@
+{% extends 'AppBundle:symfony:base.html.twig' %}
+
+{% set _user = app.user %}
+{% set _username = _user ? _user.displayName : 'Anonymous' %}
+
+{% block title %}Welcome: {{ _username }}{% endblock %}
+
+{% block body %}
+    <h2>WP Posts:</h2>
+    <ul>
+        {% for post in posts %}
+            <li>
+                <a href="{{ wp_get_permalink(post) }}">{{ post.postTitle }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <br>
+    <h3>WP Pages:</h3>
+    <ul>
+        {% for page in pages %}
+            <li>
+                <a href="{{ wp_get_permalink(page) }}">{{ page.postTitle }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
