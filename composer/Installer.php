@@ -207,11 +207,13 @@ class Installer
             }
         }
 
-        $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
+        if (!file_exists($config_virtual)) {
+            $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
-        symlink($config_physical, $config_virtual);
+            symlink($config_physical, $config_virtual);
 
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+            $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+        }
     }
 
     /**
@@ -281,7 +283,13 @@ class Installer
                 $base = basename($file);
                 $link = $abs_root . $output_dir . $base;
 
-                if (!file_exists($link)) {
+                if (file_exists($link) && !is_dir($link)) {
+                    if (!is_link($link)) {
+                        $io->write(": [ - ] unlink '$link'");
+
+                        unlink($link);
+                    }
+
                     $io->write(": [ + ] ln -s '$file' '$link'");
 
                     symlink($file, $link);
@@ -386,24 +394,22 @@ class Installer
             unlink(realpath($config_virtual));
         }
 
-        if (!file_exists($config_physical)) {
-            $cmd_config = implode(' ', [
-                "wp config create",
-                "--path='" . $config_location . "'",
-                "--dbname='" . self::$SETTINGS['parameters']['database_name'] . "'",
-                "--dbuser='" . self::$SETTINGS['parameters']['database_user'] . "'",
-                "--dbpass='" . self::$SETTINGS['parameters']['database_password'] . "'",
-                "--dbhost='" . self::$SETTINGS['parameters']['database_host'] . "'",
-                "--dbprefix='" . self::$SETTINGS['parameters']['database_prefix'] . "'",
-                "--dbcharset='" . self::$SETTINGS['parameters']['database_charset'] . "'",
-            ]);
+        $cmd_config = implode(' ', [
+            "wp config create",
+            "--path='" . $config_location . "'",
+            "--dbname='" . self::$SETTINGS['parameters']['database_name'] . "'",
+            "--dbuser='" . self::$SETTINGS['parameters']['database_user'] . "'",
+            "--dbpass='" . self::$SETTINGS['parameters']['database_password'] . "'",
+            "--dbhost='" . self::$SETTINGS['parameters']['database_host'] . "'",
+            "--dbprefix='" . self::$SETTINGS['parameters']['database_prefix'] . "'",
+            "--dbcharset='" . self::$SETTINGS['parameters']['database_charset'] . "'",
+        ]);
 
-            $io->write(": [ + ] $cmd_config");
+        $io->write(": [ + ] $cmd_config");
 
-            exec($cmd_config);
+        exec($cmd_config);
 
-            rename($config_virtual, $config_physical);
-        }
+        rename($config_virtual, $config_physical);
 
         $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
@@ -469,7 +475,7 @@ class Installer
         $config   = self::$CONFIG['wordpress'];
         $symlinks = $config['symlink'];
 
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+        $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         // install symlinks
         foreach ($symlinks as $symlink) {
@@ -492,7 +498,7 @@ class Installer
                 $base = basename($file);
                 $link = $abs_root . $output_dir . $base;
 
-                if (file_exists($link)) {
+                if (file_exists($link) && !is_dir($link)) {
                     if (!is_link($link)) {
                         $io->write(": [ - ] unlink '$link'");
 
