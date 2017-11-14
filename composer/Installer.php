@@ -167,7 +167,8 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         if (!is_dir($config_system['dir'])) {
-            $cmd_create = "composer create-project '$config_version' '$config_location' --quiet --no-interaction";
+            //$cmd_create = "composer create-project '$config_version' '$config_location' --quiet --no-interaction";
+            $cmd_create = "composer create-project '$config_version' '$config_location'";
 
             $io->write(": [ + ] $cmd_create");
 
@@ -182,8 +183,10 @@ class Installer
                     $repo_version = $require['version'];
                     $repo_url = $require['url'];
 
-                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --quiet --no-interaction --working-dir '$config_absolute'";
-                    $cmd_require = "composer require $repo_name '$repo_version' --quiet --no-interaction --working-dir '$config_absolute'";
+                    //$cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --quiet --no-interaction --working-dir '$config_absolute'";
+                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --working-dir '$config_absolute'";
+                    //$cmd_require = "composer require $repo_name '$repo_version' --quiet --no-interaction --working-dir '$config_absolute'";
+                    $cmd_require = "composer require $repo_name '$repo_version' --working-dir '$config_absolute'";
 
                     $io->write(": [ + ] $cmd_repository");
                     exec($cmd_repository);
@@ -240,7 +243,8 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (is_dir($config_location)) {
-            $cmd_update = "composer update --quiet --no-interaction --working-dir '$config_location' ";
+            //$cmd_update = "composer update --quiet --no-interaction --working-dir '$config_location' ";
+            $cmd_update = "composer update --working-dir '$config_location' ";
 
             $io->write(": [ + ] $cmd_update");
 
