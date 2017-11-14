@@ -168,7 +168,7 @@ class Installer
 
         if (!is_dir($config_system['dir'])) {
             //$cmd_create = "composer create-project '$config_version' '$config_location' --quiet --no-interaction";
-            $cmd_create = "composer create-project '$config_version' '$config_location'";
+            $cmd_create = "composer create-project '$config_version' '$config_location' --no-interaction";
 
             $io->write(": [ + ] $cmd_create");
 
