@@ -182,10 +182,8 @@ class Installer
                     $repo_version = $require['version'];
                     $repo_url = $require['url'];
 
-                    //$cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --quiet --no-interaction --working-dir '$config_absolute'";
-                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --no-interaction --working-dir '$config_absolute'";
-                    //$cmd_require = "composer require $repo_name '$repo_version' --quiet --no-interaction --working-dir '$config_absolute'";
-                    $cmd_require = "composer require $repo_name '$repo_version' --no-interaction --working-dir '$config_absolute'";
+                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --quiet --no-interaction --working-dir '$config_absolute'";
+                    $cmd_require = "composer require $repo_name '$repo_version' --quiet --no-interaction --working-dir '$config_absolute'";
 
                     $io->write(": [ + ] $cmd_repository");
                     exec($cmd_repository);
