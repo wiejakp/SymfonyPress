@@ -31,6 +31,9 @@
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress"
     ],
+    "post-install-cmd": [
+      "@symfonypress-install"
+    ],
     "post-update-cmd": [
       "@symfonypress-install",
       "@symfonypress-update"

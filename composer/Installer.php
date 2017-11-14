@@ -393,9 +393,6 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (!is_dir($config_location)) {
-            // unlink files to prevent overriding originals
-            self::install_wordpress_unlink($event);
-
             //$cmd_download = "wp core download --path='$config_location'";
             $cmd_download = "wp core download --version='4.8.2' --path='$config_location'";
 
@@ -475,11 +472,17 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (is_dir($config_location)) {
+            // unlink files to prevent overriding originals
+            self::install_wordpress_unlink($event);
+
             $cmd_update = "wp core update --path='$config_location'";
 
             $io->write(": [ + ] $cmd_update");
 
             exec($cmd_update);
+
+            // re-link files
+            self::install_wordpress_symlinks($event);
         }
 
         $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
