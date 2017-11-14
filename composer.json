@@ -20,14 +20,14 @@
   },
   "scripts": {
     "symfonypress-install": [
-      "wiejakp\\SymfonyPress\\Composer\\Installer::input",
+      "wiejakp\\SymfonyPress\\Composer\\Installer::input"
+    ],
+    "symfonypress-update": [
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_symlinks",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config"
-    ],
-    "symfonypress-update": [
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config",
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress"
     ],

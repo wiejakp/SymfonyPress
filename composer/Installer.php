@@ -301,9 +301,11 @@ class Installer
                     }
                 }
 
-                $io->write(": [ + ] ln -s '$file' '$link'");
+                if (!file_exists($link) && !is_dir($link)) {
+                    $io->write(": [ + ] ln -s '$file' '$link'");
 
-                symlink($file, $link);
+                    symlink($file, $link);
+                }
             }
 
             if ($cmd_command) {
@@ -399,31 +401,39 @@ class Installer
         }
 
         if (file_exists($config_virtual)) {
-            $io->write(": [ - ] unlink '$config_virtual'");
+            if (!is_link($config_virtual)) {
+                $io->write(": [ - ] unlink '$config_virtual'");
 
-            unlink(realpath($config_virtual));
+                unlink($config_virtual);
+            }
         }
 
-        $cmd_config = implode(' ', [
-            "wp config create",
-            "--path='" . $config_location . "'",
-            "--dbname='" . self::$SETTINGS['parameters']['database_name'] . "'",
-            "--dbuser='" . self::$SETTINGS['parameters']['database_user'] . "'",
-            "--dbpass='" . self::$SETTINGS['parameters']['database_password'] . "'",
-            "--dbhost='" . self::$SETTINGS['parameters']['database_host'] . "'",
-            "--dbprefix='" . self::$SETTINGS['parameters']['database_prefix'] . "'",
-            "--dbcharset='" . self::$SETTINGS['parameters']['database_charset'] . "'",
-        ]);
+        if (!file_exists($config_virtual)) {
+            $cmd_config = implode(' ', [
+                "wp config create",
+                "--path='" . $config_location . "'",
+                "--dbname='" . self::$SETTINGS['parameters']['database_name'] . "'",
+                "--dbuser='" . self::$SETTINGS['parameters']['database_user'] . "'",
+                "--dbpass='" . self::$SETTINGS['parameters']['database_password'] . "'",
+                "--dbhost='" . self::$SETTINGS['parameters']['database_host'] . "'",
+                "--dbprefix='" . self::$SETTINGS['parameters']['database_prefix'] . "'",
+                "--dbcharset='" . self::$SETTINGS['parameters']['database_charset'] . "'",
+            ]);
 
-        $io->write(": [ + ] $cmd_config");
+            $io->write(": [ + ] $cmd_config");
 
-        exec($cmd_config);
+            exec($cmd_config);
 
-        rename($config_virtual, $config_physical);
+            $io->write(": [ + ] mv '$config_virtual' '$config_physical'");
 
-        $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
+            rename($config_virtual, $config_physical);
+        }
 
-        symlink($config_physical, $config_virtual);
+        if (!file_exists($config_virtual) && file_exists($config_physical)) {
+            $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
+
+            symlink($config_physical, $config_virtual);
+        }
 
         $cmd_core = implode(' ', [
             "wp core install",
@@ -516,9 +526,11 @@ class Installer
                     }
                 }
 
-                $io->write(": [ + ] ln -s '$file' '$link'");
+                if (!file_exists($link)) {
+                    $io->write(": [ + ] ln -s '$file' '$link'");
 
-                symlink($file, $link);
+                    symlink($file, $link);
+                }
             }
         }
 
