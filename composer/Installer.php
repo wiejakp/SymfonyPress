@@ -393,7 +393,11 @@ class Installer
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (!is_dir($config_location)) {
-            $cmd_download = "wp core download --path='$config_location'";
+            // unlink files to prevent overriding originals
+            self::install_wordpress_unlink($event);
+
+            //$cmd_download = "wp core download --path='$config_location'";
+            $cmd_download = "wp core download --version='4.8.2' --path='$config_location'";
 
             $io->write(": [ + ] $cmd_download");
 
@@ -530,6 +534,49 @@ class Installer
                     $io->write(": [ + ] ln -s '$file' '$link'");
 
                     symlink($file, $link);
+                }
+            }
+        }
+
+        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+    }
+
+    /**
+     * @param Event $event
+     */
+    protected static function install_wordpress_unlink(Event $event): void
+    {
+        // local vars
+        $function = __FUNCTION__;
+
+        // input/output handler
+        $io = $event->getIO();
+
+        $config = self::$CONFIG['wordpress'];
+        $symlinks = $config['symlink'];
+
+        $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
+
+        // install symlinks
+        foreach ($symlinks as $symlink) {
+            $root = $config['dir'];
+            $input_file = $symlink['input_filename'];
+            $input_dir = $symlink['input_dir'];
+            $output_dir = $symlink['output_dir'];
+
+            $abs_root = self::$ROOT . $root;
+            $abs_input = self::$ROOT . $input_dir . $input_file;
+
+            foreach (glob($abs_input) as $file) {
+                $base = basename($file);
+                $link = $abs_root . $output_dir . $base;
+
+                if (file_exists($link) && !is_dir($link)) {
+                    if (is_link($link)) {
+                        $io->write(": [ - ] unlink '$link'");
+
+                        unlink($link);
+                    }
                 }
             }
         }
