@@ -49,7 +49,7 @@ class Installer
 
         // parse projects settings
         if (!empty(self::$CONFIG)) {
-            $settings_dir  = self::$CONFIG['dir'];
+            $settings_dir = self::$CONFIG['dir'];
             $settings_path = $settings_dir . self::$CONFIG['filename'];
 
             // create config directory when it doesn't exist
@@ -75,7 +75,7 @@ class Installer
         $function = __FUNCTION__;
 
         // store all information in following file
-        $settings_dir  = self::$CONFIG['dir'];
+        $settings_dir = self::$CONFIG['dir'];
         $settings_path = $settings_dir . self::$CONFIG['filename'];
 
         // input/output handler
@@ -86,43 +86,49 @@ class Installer
         // if settings already exist, skip input prompts
         if (!file_exists($settings_path)) {
             // store all user inputs
-            $data    = [];
-            $params  = &$data['parameters'];
+            $data = [];
+            $params = &$data['parameters'];
             $project = &$data['project'];
 
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
 
-            $io->write(": [ ! ] Server Information\n\r:");
+            $io->write(": [ ! ] Server Information");
+            $io->write(":");
 
-            $params['database_host']     = $io->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
-            $params['database_port']     = $io->ask(": [ ? ] Database Port [3306]: ", '3306');
-            $params['database_name']     = $io->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
-            $params['database_user']     = $io->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
+            $params['database_host'] = $io->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
+            $params['database_port'] = $io->ask(": [ ? ] Database Port [3306]: ", '3306');
+            $params['database_name'] = $io->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
+            $params['database_user'] = $io->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
             $params['database_password'] = $io->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
-            $params['database_prefix']   = $io->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
-            $params['database_charset']  = $io->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
-            $params['mailer_transport']  = $io->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
-            $params['mailer_host']       = $io->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
-            $params['mailer_user']       = $io->ask(": [ ? ] Mail Server User [null]: ", 'null');
-            $params['mailer_password']   = $io->ask(": [ ? ] Mail Server Password [null]: ", 'null');
-            $params['secret']            = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
+            $params['database_prefix'] = $io->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
+            $params['database_charset'] = $io->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
+            $params['mailer_transport'] = $io->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
+            $params['mailer_host'] = $io->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
+            $params['mailer_user'] = $io->ask(": [ ? ] Mail Server User [null]: ", 'null');
+            $params['mailer_password'] = $io->ask(": [ ? ] Mail Server Password [null]: ", 'null');
+            $params['secret'] = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
 
-            $io->write(":\n\r:\n\r: [ ! ] Web Site Information\n\r:");
+            $io->write(":");
+            $io->write(": [ ! ] Web Site Information");
+            $io->write(":");
 
-            $project['url']   = $io->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
+            $project['url'] = $io->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
             $project['title'] = $io->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
 
-            $io->write(":\n\r:\n\r: [ ! ] Administrator User Information\n\r:");
+            $io->write(":");
+            $io->write(": [ ! ] Administrator User Information");
+            $io->write(":");
 
             $project['mail'] = $io->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
             $project['user'] = $io->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
             $project['pass'] = $io->ask(": [ ? ] Admin Password [symfonypress]: ", 'symfonypress');
 
             $io->write(":");
+            $io->write(":");
 
             try {
-                $string_yaml    = Yaml::dump($data);
+                $string_yaml = Yaml::dump($data);
                 $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
                 $io->write(": [ + ] echo '$string_encoded' | tee '$settings_path'");
@@ -150,18 +156,18 @@ class Installer
         $io = $event->getIO();
 
         // extracted config
-        $config_system   = self::$CONFIG['symfony'];
+        $config_system = self::$CONFIG['symfony'];
         $config_location = $config_system['dir'];
         $config_absolute = self::$ROOT . $config_location;
         $config_filename = $config_system['filename'];
-        $config_version  = $config_system['version'];
+        $config_version = $config_system['version'];
         $config_physical = self::$ROOT . self::$CONFIG['dir'] . $config_filename;
-        $config_virtual  = self::$ROOT . $config_location . $config_system['config'] . $config_filename;
+        $config_virtual = self::$ROOT . $config_location . $config_system['config'] . $config_filename;
 
         $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         if (!is_dir($config_system['dir'])) {
-            $cmd_create = "composer create-project '$config_version' '$config_location' -q";
+            $cmd_create = "composer create-project '$config_version' '$config_location' --quiet --no-interaction";
 
             $io->write(": [ + ] $cmd_create");
 
@@ -169,15 +175,17 @@ class Installer
 
             if (array_key_exists('require', $config_system)) {
                 foreach ($config_system['require'] as $require) {
-                    $repo_user    = $require['user'];
-                    $repo_title   = $require['title'];
-                    $repo_name    = $repo_user . '/' . $repo_title;
-                    $repo_type    = $require['type'];
+                    $repo_user = $require['user'];
+                    $repo_title = $require['title'];
+                    $repo_name = $repo_user . '/' . $repo_title;
+                    $repo_type = $require['type'];
                     $repo_version = $require['version'];
-                    $repo_url     = $require['url'];
+                    $repo_url = $require['url'];
 
-                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' -q -d '$config_absolute'";
-                    $cmd_require    = "composer require $repo_name '$repo_version' -q -d '$config_absolute'";
+                    //$cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --quiet --no-interaction --working-dir '$config_absolute'";
+                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --no-interaction --working-dir '$config_absolute'";
+                    //$cmd_require = "composer require $repo_name '$repo_version' --quiet --no-interaction --working-dir '$config_absolute'";
+                    $cmd_require = "composer require $repo_name '$repo_version' --no-interaction --working-dir '$config_absolute'";
 
                     $io->write(": [ + ] $cmd_repository");
                     exec($cmd_repository);
@@ -189,7 +197,7 @@ class Installer
         }
 
         if (!file_exists($config_physical)) {
-            $string_yaml    = Yaml::dump([
+            $string_yaml = Yaml::dump([
                 'parameters' => self::$SETTINGS['parameters'],
             ]);
             $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
@@ -228,13 +236,13 @@ class Installer
         $io = $event->getIO();
 
         // extracted config
-        $config_system   = self::$CONFIG['symfony'];
+        $config_system = self::$CONFIG['symfony'];
         $config_location = $config_system['dir'];
 
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         if (is_dir($config_location)) {
-            $cmd_update = "composer update -d '$config_location' -q";
+            $cmd_update = "composer update --quiet --no-interaction --working-dir '$config_location' ";
 
             $io->write(": [ + ] $cmd_update");
 
@@ -255,22 +263,22 @@ class Installer
         // input/output handler
         $io = $event->getIO();
 
-        $config   = self::$CONFIG['symfony'];
-        $console  = self::$ROOT . $config['dir'] . 'bin/console';
+        $config = self::$CONFIG['symfony'];
+        $console = self::$ROOT . $config['dir'] . 'bin/console';
         $symlinks = $config['symlink'];
 
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         // install symlinks
         foreach ($symlinks as $symlink) {
-            $root       = $config['dir'];
+            $root = $config['dir'];
             $input_file = $symlink['input_filename'];
-            $input_dir  = $symlink['input_dir'];
+            $input_dir = $symlink['input_dir'];
             $output_dir = $symlink['output_dir'];
-            $command    = array_key_exists('command', $symlink) ? "$console " . $symlink['command'] : null;
+            $cmd_command = array_key_exists('command', $symlink) ? "$console " . $symlink['command'] : null;
 
-            $abs_root   = self::$ROOT . $root;
-            $abs_input  = self::$ROOT . $input_dir . $input_file;
+            $abs_root = self::$ROOT . $root;
+            $abs_input = self::$ROOT . $input_dir . $input_file;
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
@@ -289,17 +297,17 @@ class Installer
 
                         unlink($link);
                     }
-
-                    $io->write(": [ + ] ln -s '$file' '$link'");
-
-                    symlink($file, $link);
                 }
+
+                $io->write(": [ + ] ln -s '$file' '$link'");
+
+                symlink($file, $link);
             }
 
-            if ($command) {
-                $io->write(": [ + ] $command");
+            if ($cmd_command) {
+                $io->write(": [ + ] $cmd_command");
 
-                exec($command);
+                exec($cmd_command);
             }
         }
 
@@ -317,22 +325,22 @@ class Installer
         // input/output handler
         $io = $event->getIO();
 
-        $config  = self::$CONFIG['symfony'];
+        $config = self::$CONFIG['symfony'];
         $appends = $config['append'];
         $replace = $config['replace'];
 
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         foreach ($appends as $file) {
-            $dir_source      = self::$ROOT . $file['source'];
+            $dir_source = self::$ROOT . $file['source'];
             $dir_destination = self::$ROOT . $config['dir'] . $file['destination'];
 
-            $array_source      = Yaml::parse(file_get_contents($dir_source));
+            $array_source = Yaml::parse(file_get_contents($dir_source));
             $array_destination = Yaml::parse(file_get_contents($dir_destination));
 
             if (!array_key_exists(key($array_source), $array_destination)) {
-                $array_merged   = array_merge($array_destination, $array_source);
-                $string_yaml    = Yaml::dump($array_merged, 10);
+                $array_merged = array_merge($array_destination, $array_source);
+                $string_yaml = Yaml::dump($array_merged, 10);
                 $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
                 $io->write(": [ + ] echo '$string_encoded' | tee '$dir_destination'");
@@ -342,13 +350,13 @@ class Installer
         }
 
         foreach ($replace as $file) {
-            $dir_source      = self::$ROOT . $file['source'];
+            $dir_source = self::$ROOT . $file['source'];
             $dir_destination = self::$ROOT . $config['dir'] . $file['destination'];
 
             $array_source = Yaml::parse(file_get_contents($dir_source));
 
             if (!array_key_exists(key($array_source), $array_destination)) {
-                $yamp_string  = Yaml::dump($array_source, 10);
+                $yamp_string = Yaml::dump($array_source, 10);
                 $yamp_encoded = filter_var($yamp_string, FILTER_SANITIZE_ENCODED);
 
                 $io->write(": [ + ] echo '$yamp_encoded' | tee '$dir_destination'");
@@ -372,11 +380,11 @@ class Installer
         $io = $event->getIO();
 
         // extracted config
-        $config_system   = self::$CONFIG['wordpress'];
+        $config_system = self::$CONFIG['wordpress'];
         $config_location = $config_system['dir'];
         $config_filename = $config_system['filename'];
         $config_physical = self::$ROOT . self::$CONFIG['dir'] . $config_filename;
-        $config_virtual  = self::$ROOT . $config_system['dir'] . $config_system['config'] . $config_filename;
+        $config_virtual = self::$ROOT . $config_system['dir'] . $config_system['config'] . $config_filename;
 
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
@@ -445,7 +453,7 @@ class Installer
         $io = $event->getIO();
 
         // extracted config
-        $config_system   = self::$CONFIG['wordpress'];
+        $config_system = self::$CONFIG['wordpress'];
         $config_location = $config_system['dir'];
 
         $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
@@ -472,20 +480,20 @@ class Installer
         // input/output handler
         $io = $event->getIO();
 
-        $config   = self::$CONFIG['wordpress'];
+        $config = self::$CONFIG['wordpress'];
         $symlinks = $config['symlink'];
 
         $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         // install symlinks
         foreach ($symlinks as $symlink) {
-            $root       = $config['dir'];
+            $root = $config['dir'];
             $input_file = $symlink['input_filename'];
-            $input_dir  = $symlink['input_dir'];
+            $input_dir = $symlink['input_dir'];
             $output_dir = $symlink['output_dir'];
 
-            $abs_root   = self::$ROOT . $root;
-            $abs_input  = self::$ROOT . $input_dir . $input_file;
+            $abs_root = self::$ROOT . $root;
+            $abs_input = self::$ROOT . $input_dir . $input_file;
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
@@ -504,11 +512,11 @@ class Installer
 
                         unlink($link);
                     }
-
-                    $io->write(": [ + ] ln -s '$file' '$link'");
-
-                    symlink($file, $link);
                 }
+
+                $io->write(": [ + ] ln -s '$file' '$link'");
+
+                symlink($file, $link);
             }
         }
 
