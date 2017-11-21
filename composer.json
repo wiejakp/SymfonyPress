@@ -16,7 +16,8 @@
   },
   "require": {
     "php": "~7.1",
-    "symfony/yaml": "^3.3"
+    "symfony/yaml": "^3.3",
+    "wp-cli/wp-cli": "^1.4"
   },
   "scripts": {
     "symfonypress-install": [
@@ -25,7 +26,9 @@
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_symlinks",
       "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config"
+      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config",
+      "chmod 777 /var/www/SymfonyPress/symfony/var/",
+      "chmod 777 /var/www/SymfonyPress/symfony/var/ -R"
     ],
     "symfonypress-update": [
       "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
@@ -40,8 +43,11 @@
     ]
   },
   "extra": {
-    "dir": "config/",
-    "filename": "settings.yml",
+    "dir": {
+      "shared": "shared/",
+      "private": "private/"
+    },
+    "config": "config.json",
     "symfony": {
       "dir": "symfony/",
       "config": "app/config/",
@@ -95,6 +101,7 @@
       "dir": "wordpress/",
       "config": "",
       "filename": "wp-config.php",
+      "version": "4.8.2",
       "symlink": [
         {
           "input_filename": "index.php",

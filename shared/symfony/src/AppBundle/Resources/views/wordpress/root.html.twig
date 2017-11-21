@@ -1,0 +1,23 @@
+{% extends 'AppBundle:symfony:base.html.twig' %}
+
+{% block title %}WordPress{% endblock %}
+
+{% block body %}
+    <h2>WP Permalink:</h2>
+    <b>Current Permalink:</b> {{ permalink.getOptionValue() }}<br>
+    <b>Clear Cache</b>: <a href="{{ path('wordpress_rewrite_refresh') }}">Clear</a>
+    <br>
+    <h2>Change Permalink:</h2>
+    <ul>
+        <li>
+            <a href="{{ path('wordpress_rewrite_change', {
+                'type': 0
+            }) }}">/%year%/%monthnum%/%day%/%postname%/</a>
+        </li>
+        <li>
+            <a href="{{ path('wordpress_rewrite_change', {
+                'type': 1
+            }) }}">/%postname%/</a>
+        </li>
+    </ul>
+{% endblock %}

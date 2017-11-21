@@ -21,7 +21,22 @@ class Installer
     /**
      * @var string
      */
-    private static $ROOT;
+    private static $METHOD;
+
+    /**
+     * @var string
+     */
+    private static $IO;
+
+    /**
+     * @var string
+     */
+    private static $WP_CLI;
+
+    /**
+     * @var string
+     */
+    private static $WP_DIR;
 
     /**
      * @var array
@@ -29,9 +44,29 @@ class Installer
     private static $CONFIG;
 
     /**
+     * @var string
+     */
+    private static $ROOT;
+
+    /**
+     * @var string
+     */
+    private static $SHARED_DIR;
+
+    /**
+     * @var string
+     */
+    private static $PRIVATE_DIR;
+
+    /**
+     * @var string
+     */
+    private static $PRIVATE_FILE;
+
+    /**
      * @var array
      */
-    private static $SETTINGS;
+    private static $PARAMETERS;
 
     /**
      * @param $method
@@ -39,15 +74,36 @@ class Installer
      */
     public static function __callStatic($method, $args)
     {
-        // root directory
-        self::$ROOT = dirname(dirname(__FILE__)) . '/';
-
-        // parse projects configs
-        if (!empty($args) && $args[0] instanceof Event) {
-            self::$CONFIG = $args[0]->getComposer()->getPackage()->getExtra();
+        if (empty($args) || false === $args[0] instanceof Event) {
+            throw new InvalidArgumentException('Every method call must contain Event parameter.');
         }
 
+        self::$METHOD = $method;
+        self::$IO = $args[0]->getIO();
+        self::$CONFIG = $args[0]->getComposer()->getPackage()->getExtra();
+        self::$ROOT = dirname(dirname(__FILE__)) . '/';
+        self::$SHARED_DIR = self::$ROOT . stripslashes(self::$CONFIG['dir']['shared']);
+        self::$PRIVATE_DIR = self::$ROOT . stripslashes(self::$CONFIG['dir']['private']);
+        self::$PRIVATE_FILE = self::$PRIVATE_DIR . self::$CONFIG['config'];
+        self::$WP_CLI = $args[0]->getComposer()->getConfig()->get('vendor-dir') . '/wp-cli/wp-cli/bin/wp';
+        self::$WP_DIR = $args[0]->getComposer()->getConfig()->get('vendor-dir') . '/wordpress/wordpress/';
+
+        if (!is_dir(self::$SHARED_DIR)) {
+            mkdir(self::$SHARED_DIR, 0777, true);
+        }
+
+        if (!is_dir(self::$PRIVATE_DIR)) {
+            mkdir(self::$PRIVATE_DIR, 0777, true);
+        }
+
+        if (!file_exists(self::$PRIVATE_FILE)) {
+            touch(self::$PRIVATE_FILE);
+        }
+
+        self::$PARAMETERS = json_decode(stripslashes(file_get_contents(self::$PRIVATE_FILE)), true);
+
         // parse projects settings
+        /*
         if (!empty(self::$CONFIG)) {
             $settings_dir = self::$CONFIG['dir'];
             $settings_path = $settings_dir . self::$CONFIG['filename'];
@@ -62,8 +118,13 @@ class Installer
                 self::$SETTINGS = Yaml::parse(file_get_contents($settings_path));
             }
         }
+        */
+
+        self::$IO->write("\n\r\n\r: METHOD STARTED: $method() \n\r:");
 
         forward_static_call_array([self::class, $method], $args);
+
+        self::$IO->write(": METHOD FINISHED: $method() \n\r\n\r");
     }
 
     /**
@@ -71,6 +132,55 @@ class Installer
      */
     protected static function input(Event $event): void
     {
+        // if settings already exist, skip input prompts
+        if (!self::$PARAMETERS) {
+            // store all user inputs
+            $data = [];
+            $params = &$data['parameters'];
+            $project = &$data['project'];
+
+            // generate secret token
+            $secret = uniqid('SymfonyPress_', true);
+
+            self::$IO->write(": [ ! ] Server Information");
+            self::$IO->write(":");
+
+            $params['database_host'] = self::$IO->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
+            $params['database_port'] = self::$IO->ask(": [ ? ] Database Port [3306]: ", '3306');
+            $params['database_name'] = self::$IO->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
+            $params['database_user'] = self::$IO->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
+            $params['database_password'] = self::$IO->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
+            $params['database_prefix'] = self::$IO->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
+            $params['database_charset'] = self::$IO->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
+            $params['mailer_transport'] = self::$IO->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
+            $params['mailer_host'] = self::$IO->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
+            $params['mailer_user'] = self::$IO->ask(": [ ? ] Mail Server User [null]: ", 'null');
+            $params['mailer_password'] = self::$IO->ask(": [ ? ] Mail Server Password [null]: ", 'null');
+            $params['secret'] = self::$IO->ask(": [ ? ] Secret Token [$secret]: ", $secret);
+
+            self::$IO->write(":");
+            self::$IO->write(": [ ! ] Web Site Information");
+            self::$IO->write(":");
+
+            $project['url'] = self::$IO->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
+            $project['title'] = self::$IO->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
+
+            self::$IO->write(":");
+            self::$IO->write(": [ ! ] Administrator User Information");
+            self::$IO->write(":");
+
+            $project['mail'] = self::$IO->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
+            $project['user'] = self::$IO->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
+            $project['pass'] = self::$IO->ask(": [ ? ] Admin Password [symfonypress]: ", 'symfonypress');
+
+            self::$IO->write(":");
+            self::$IO->write(":");
+
+            file_put_contents(self::$PRIVATE_FILE, json_encode($data, JSON_PRETTY_PRINT));
+        }
+
+
+        /*
         // local vars
         $function = __FUNCTION__;
 
@@ -78,10 +188,7 @@ class Installer
         $settings_dir = self::$CONFIG['dir'];
         $settings_path = $settings_dir . self::$CONFIG['filename'];
 
-        // input/output handler
-        $io = $event->getIO();
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+        self::$IO->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         // if settings already exist, skip input prompts
         if (!file_exists($settings_path)) {
@@ -93,55 +200,56 @@ class Installer
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
 
-            $io->write(": [ ! ] Server Information");
-            $io->write(":");
+            self::$IO->write(": [ ! ] Server Information");
+            self::$IO->write(":");
 
-            $params['database_host'] = $io->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
-            $params['database_port'] = $io->ask(": [ ? ] Database Port [3306]: ", '3306');
-            $params['database_name'] = $io->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
-            $params['database_user'] = $io->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
-            $params['database_password'] = $io->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
-            $params['database_prefix'] = $io->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
-            $params['database_charset'] = $io->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
-            $params['mailer_transport'] = $io->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
-            $params['mailer_host'] = $io->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
-            $params['mailer_user'] = $io->ask(": [ ? ] Mail Server User [null]: ", 'null');
-            $params['mailer_password'] = $io->ask(": [ ? ] Mail Server Password [null]: ", 'null');
-            $params['secret'] = $io->ask(": [ ? ] Secret Token [$secret]: ", $secret);
+            $params['database_host'] = self::$IO->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
+            $params['database_port'] = self::$IO->ask(": [ ? ] Database Port [3306]: ", '3306');
+            $params['database_name'] = self::$IO->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
+            $params['database_user'] = self::$IO->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
+            $params['database_password'] = self::$IO->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
+            $params['database_prefix'] = self::$IO->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
+            $params['database_charset'] = self::$IO->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
+            $params['mailer_transport'] = self::$IO->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
+            $params['mailer_host'] = self::$IO->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
+            $params['mailer_user'] = self::$IO->ask(": [ ? ] Mail Server User [null]: ", 'null');
+            $params['mailer_password'] = self::$IO->ask(": [ ? ] Mail Server Password [null]: ", 'null');
+            $params['secret'] = self::$IO->ask(": [ ? ] Secret Token [$secret]: ", $secret);
 
-            $io->write(":");
-            $io->write(": [ ! ] Web Site Information");
-            $io->write(":");
+            self::$IO->write(":");
+            self::$IO->write(": [ ! ] Web Site Information");
+            self::$IO->write(":");
 
-            $project['url'] = $io->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
-            $project['title'] = $io->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
+            $project['url'] = self::$IO->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
+            $project['title'] = self::$IO->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
 
-            $io->write(":");
-            $io->write(": [ ! ] Administrator User Information");
-            $io->write(":");
+            self::$IO->write(":");
+            self::$IO->write(": [ ! ] Administrator User Information");
+            self::$IO->write(":");
 
-            $project['mail'] = $io->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
-            $project['user'] = $io->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
-            $project['pass'] = $io->ask(": [ ? ] Admin Password [symfonypress]: ", 'symfonypress');
+            $project['mail'] = self::$IO->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
+            $project['user'] = self::$IO->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
+            $project['pass'] = self::$IO->ask(": [ ? ] Admin Password [symfonypress]: ", 'symfonypress');
 
-            $io->write(":");
-            $io->write(":");
+            self::$IO->write(":");
+            self::$IO->write(":");
 
             try {
                 $string_yaml = Yaml::dump($data);
                 $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
-                $io->write(": [ + ] echo '$string_encoded' | tee '$settings_path'");
+                self::$IO->write(": [ + ] echo '$string_encoded' | tee '$settings_path'");
 
                 file_put_contents($settings_path, $string_yaml);
             } catch (Exception $exception) {
                 $error = $exception->getMessage();
 
-                $io->write(": [ - ] ERROR: $error");
+                self::$IO->write(": [ - ] ERROR: $error");
             }
         }
 
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+        self::$IO->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
+        */
     }
 
     /**
@@ -149,28 +257,21 @@ class Installer
      */
     protected static function install_symfony(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
+        $dir_shared = self::$ROOT . self::$CONFIG['dir']['shared'] . self::$CONFIG['symfony']['dir'];
+        $dir_system = self::$ROOT . self::$CONFIG['symfony']['dir'];
 
         // extracted config
         $config_system = self::$CONFIG['symfony'];
-        $config_location = $config_system['dir'];
-        $config_absolute = self::$ROOT . $config_location;
+        $config_location = $config_system['config'];
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
-        $config_physical = self::$ROOT . self::$CONFIG['dir'] . $config_filename;
-        $config_virtual = self::$ROOT . $config_location . $config_system['config'] . $config_filename;
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
+        $config_physical = $dir_shared . $config_location . $config_filename;
+        $config_virtual = $dir_system . $config_location . $config_filename;
 
         if (!is_dir($config_system['dir'])) {
-            //$cmd_create = "composer create-project '$config_version' '$config_location' --quiet --no-interaction";
-            $cmd_create = "composer create-project '$config_version' '$config_location' --no-interaction";
+            $cmd_create = "composer create-project '$config_version' '$dir_system' --no-interaction";
 
-            $io->write(": [ + ] $cmd_create");
+            self::$IO->write(": [ + ] $cmd_create");
 
             exec($cmd_create);
 
@@ -183,45 +284,40 @@ class Installer
                     $repo_version = $require['version'];
                     $repo_url = $require['url'];
 
-                    //$cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --quiet --no-interaction --working-dir '$config_absolute'";
-                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --working-dir '$config_absolute'";
-                    //$cmd_require = "composer require $repo_name '$repo_version' --quiet --no-interaction --working-dir '$config_absolute'";
-                    $cmd_require = "composer require $repo_name '$repo_version' --working-dir '$config_absolute'";
+                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --working-dir '$dir_system'";
+                    $cmd_require = "composer require $repo_name '$repo_version' --working-dir '$dir_system'";
 
-                    $io->write(": [ + ] $cmd_repository");
+                    self::$IO->write(": [ + ] $cmd_repository");
                     exec($cmd_repository);
 
-                    $io->write(": [ + ] $cmd_require");
+                    self::$IO->write(": [ + ] $cmd_require");
                     exec($cmd_require);
                 }
             }
         }
 
         if (!file_exists($config_physical)) {
-            $string_yaml = Yaml::dump([
-                'parameters' => self::$SETTINGS['parameters'],
-            ]);
+            $parameters['parameters'] = self::$PARAMETERS['parameters'];
+            $string_yaml = Yaml::dump($parameters);
             $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
-            $io->write(": [ + ] echo '$string_encoded' | tee '$config_physical'");
+            self::$IO->write(": [ + ] echo '$string_encoded' | tee '$config_physical'");
 
             file_put_contents($config_physical, $string_yaml);
         }
 
         if (file_exists($config_virtual)) {
             if (!is_link($config_virtual)) {
-                $io->write(": [ - ] unlink '$config_virtual'");
+                self::$IO->write(": [ - ] unlink '$config_virtual'");
 
                 unlink($config_virtual);
             }
         }
 
         if (!file_exists($config_virtual)) {
-            $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
+            self::$IO->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
             symlink($config_physical, $config_virtual);
-
-            $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
         }
     }
 
@@ -230,28 +326,17 @@ class Installer
      */
     protected static function update_symfony(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
-
         // extracted config
         $config_system = self::$CONFIG['symfony'];
         $config_location = $config_system['dir'];
 
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
-
         if (is_dir($config_location)) {
-            //$cmd_update = "composer update --quiet --no-interaction --working-dir '$config_location' ";
             $cmd_update = "composer update --working-dir '$config_location' ";
 
-            $io->write(": [ + ] $cmd_update");
+            self::$IO->write(": [ + ] $cmd_update");
 
             exec($cmd_update);
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
     /**
@@ -259,17 +344,9 @@ class Installer
      */
     protected static function install_symfony_symlinks(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
-
         $config = self::$CONFIG['symfony'];
         $console = self::$ROOT . $config['dir'] . 'bin/console';
         $symlinks = $config['symlink'];
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         // install symlinks
         foreach ($symlinks as $symlink) {
@@ -284,7 +361,7 @@ class Installer
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
-                $io->write(": [ + ] mkdir '$abs_output' 0777, true");
+                self::$IO->write(": [ + ] mkdir '$abs_output' 0777, true");
 
                 mkdir($abs_output, 0777, true);
             }
@@ -295,27 +372,25 @@ class Installer
 
                 if (file_exists($link) && !is_dir($link)) {
                     if (!is_link($link)) {
-                        $io->write(": [ - ] unlink '$link'");
+                        self::$IO->write(": [ - ] unlink '$link'");
 
                         unlink($link);
                     }
                 }
 
                 if (!file_exists($link) && !is_dir($link)) {
-                    $io->write(": [ + ] ln -s '$file' '$link'");
+                    self::$IO->write(": [ + ] ln -s '$file' '$link'");
 
                     symlink($file, $link);
                 }
             }
 
             if ($cmd_command) {
-                $io->write(": [ + ] $cmd_command");
+                self::$IO->write(": [ + ] $cmd_command");
 
                 exec($cmd_command);
             }
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
     /**
@@ -323,17 +398,9 @@ class Installer
      */
     protected static function install_symfony_config(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
-
         $config = self::$CONFIG['symfony'];
         $appends = $config['append'];
         $replace = $config['replace'];
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
 
         foreach ($appends as $file) {
             $dir_source = self::$ROOT . $file['source'];
@@ -347,7 +414,7 @@ class Installer
                 $string_yaml = Yaml::dump($array_merged, 10);
                 $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
 
-                $io->write(": [ + ] echo '$string_encoded' | tee '$dir_destination'");
+                self::$IO->write(": [ + ] echo '$string_encoded' | tee '$dir_destination'");
 
                 file_put_contents($dir_destination, $string_yaml);
             }
@@ -363,13 +430,11 @@ class Installer
                 $yamp_string = Yaml::dump($array_source, 10);
                 $yamp_encoded = filter_var($yamp_string, FILTER_SANITIZE_ENCODED);
 
-                $io->write(": [ + ] echo '$yamp_encoded' | tee '$dir_destination'");
+                self::$IO->write(": [ + ] echo '$yamp_encoded' | tee '$dir_destination'");
 
                 file_put_contents($dir_destination, $yamp_string);
             }
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
     /**
@@ -377,33 +442,34 @@ class Installer
      */
     protected static function install_wordpress(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
+        $wp_cli = self::$WP_CLI;
 
-        // input/output handler
-        $io = $event->getIO();
+        $dir_shared = self::$ROOT . self::$CONFIG['dir']['shared'] . self::$CONFIG['wordpress']['dir'];
+        $dir_system = self::$ROOT . self::$CONFIG['wordpress']['dir'];
 
         // extracted config
         $config_system = self::$CONFIG['wordpress'];
-        $config_location = $config_system['dir'];
+        $config_location = $config_system['config'];
         $config_filename = $config_system['filename'];
-        $config_physical = self::$ROOT . self::$CONFIG['dir'] . $config_filename;
-        $config_virtual = self::$ROOT . $config_system['dir'] . $config_system['config'] . $config_filename;
+        $config_version = $config_system['version'];
+        $config_physical = $dir_shared . $config_location . $config_filename;
+        $config_virtual = $dir_system . $config_location . $config_filename;
 
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
+        // config data
+        $parameters = self::$PARAMETERS['parameters'];
+        $project = self::$PARAMETERS['project'];
 
-        if (!is_dir($config_location)) {
-            //$cmd_download = "wp core download --path='$config_location'";
-            $cmd_download = "wp core download --version='4.8.2' --path='$config_location'";
+        if (!is_dir($dir_system)) {
+            $cmd_download = "$wp_cli core download --version='$config_version' --path='$dir_system'";
 
-            $io->write(": [ + ] $cmd_download");
+            self::$IO->write(": [ + ] $cmd_download");
 
             exec($cmd_download);
         }
 
         if (file_exists($config_virtual)) {
             if (!is_link($config_virtual)) {
-                $io->write(": [ - ] unlink '$config_virtual'");
+                self::$IO->write(": [ - ] unlink '$config_virtual'");
 
                 unlink($config_virtual);
             }
@@ -411,47 +477,46 @@ class Installer
 
         if (!file_exists($config_virtual)) {
             $cmd_config = implode(' ', [
-                "wp config create",
+                "$wp_cli config create",
                 "--path='" . $config_location . "'",
-                "--dbname='" . self::$SETTINGS['parameters']['database_name'] . "'",
-                "--dbuser='" . self::$SETTINGS['parameters']['database_user'] . "'",
-                "--dbpass='" . self::$SETTINGS['parameters']['database_password'] . "'",
-                "--dbhost='" . self::$SETTINGS['parameters']['database_host'] . "'",
-                "--dbprefix='" . self::$SETTINGS['parameters']['database_prefix'] . "'",
-                "--dbcharset='" . self::$SETTINGS['parameters']['database_charset'] . "'",
+                "--dbname='" . $parameters['database_name'] . "'",
+                "--dbuser='" . $parameters['database_user'] . "'",
+                "--dbpass='" . $parameters['database_password'] . "'",
+                "--dbhost='" . $parameters['database_host'] . "'",
+                "--dbprefix='" . $parameters['database_prefix'] . "'",
+                "--dbcharset='" . $parameters['database_charset'] . "'",
+                "--path='" . $dir_system . "'",
             ]);
 
-            $io->write(": [ + ] $cmd_config");
+            self::$IO->write(": [ + ] $cmd_config");
 
             exec($cmd_config);
 
-            $io->write(": [ + ] mv '$config_virtual' '$config_physical'");
+            self::$IO->write(": [ + ] mv '$config_virtual' '$config_physical'");
 
             rename($config_virtual, $config_physical);
         }
 
         if (!file_exists($config_virtual) && file_exists($config_physical)) {
-            $io->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
+            self::$IO->write(": [ + ] ln -s '$config_physical' '$config_virtual'");
 
             symlink($config_physical, $config_virtual);
         }
 
         $cmd_core = implode(' ', [
-            "wp core install",
-            "--path='" . $config_location . "'",
-            "--url='" . self::$SETTINGS['project']['url'] . "'",
-            "--title='" . self::$SETTINGS['project']['title'] . "'",
-            "--admin_user='" . self::$SETTINGS['project']['user'] . "'",
-            "--admin_password='" . self::$SETTINGS['project']['pass'] . "'",
-            "--admin_email='" . self::$SETTINGS['project']['mail'] . "'",
+            "$wp_cli core install",
+            "--url='" . $project['url'] . "'",
+            "--title='" . $project['title'] . "'",
+            "--admin_user='" . $project['user'] . "'",
+            "--admin_password='" . $project['pass'] . "'",
+            "--admin_email='" . $project['mail'] . "'",
             "--skip-email",
+            "--path='" . $dir_system . "'",
         ]);
 
-        $io->write(": [ + ] $cmd_core");
+        self::$IO->write(": [ + ] $cmd_core");
 
         exec($cmd_core);
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
     /**
@@ -459,33 +524,25 @@ class Installer
      */
     protected static function update_wordpress(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
+        $wp_cli = self::$WP_CLI;
 
         // extracted config
         $config_system = self::$CONFIG['wordpress'];
         $config_location = $config_system['dir'];
 
-        $io->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
-
         if (is_dir($config_location)) {
             // unlink files to prevent overriding originals
             self::install_wordpress_unlink($event);
 
-            $cmd_update = "wp core update --path='$config_location'";
+            $cmd_update = "$wp_cli core update --path='$config_location'";
 
-            $io->write(": [ + ] $cmd_update");
+            self::$IO->write(": [ + ] $cmd_update");
 
             exec($cmd_update);
 
             // re-link files
             self::install_wordpress_symlinks($event);
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
     /**
@@ -493,16 +550,10 @@ class Installer
      */
     protected static function install_wordpress_symlinks(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
+        $wp_cli = self::$WP_CLI;
 
         $config = self::$CONFIG['wordpress'];
         $symlinks = $config['symlink'];
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         // install symlinks
         foreach ($symlinks as $symlink) {
@@ -516,7 +567,7 @@ class Installer
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
-                $io->write(": [ + ] mkdir('$abs_output', 0777, true)");
+                self::$IO->write(": [ + ] mkdir('$abs_output', 0777, true)");
 
                 mkdir($abs_output, 0777, true);
             }
@@ -527,21 +578,19 @@ class Installer
 
                 if (file_exists($link) && !is_dir($link)) {
                     if (!is_link($link)) {
-                        $io->write(": [ - ] unlink '$link'");
+                        self::$IO->write(": [ - ] unlink '$link'");
 
                         unlink($link);
                     }
                 }
 
                 if (!file_exists($link)) {
-                    $io->write(": [ + ] ln -s '$file' '$link'");
+                    self::$IO->write(": [ + ] ln -s '$file' '$link'");
 
                     symlink($file, $link);
                 }
             }
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 
     /**
@@ -549,16 +598,10 @@ class Installer
      */
     protected static function install_wordpress_unlink(Event $event): void
     {
-        // local vars
-        $function = __FUNCTION__;
-
-        // input/output handler
-        $io = $event->getIO();
+        $wp_cli = self::$WP_CLI;
 
         $config = self::$CONFIG['wordpress'];
         $symlinks = $config['symlink'];
-
-        $io->write("\n\r\n\r: METHOD STARTED: $function()\n\r:");
 
         // install symlinks
         foreach ($symlinks as $symlink) {
@@ -576,14 +619,12 @@ class Installer
 
                 if (file_exists($link) && !is_dir($link)) {
                     if (is_link($link)) {
-                        $io->write(": [ - ] unlink '$link'");
+                        self::$IO->write(": [ - ] unlink '$link'");
 
                         unlink($link);
                     }
                 }
             }
         }
-
-        $io->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
     }
 }
