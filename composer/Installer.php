@@ -319,6 +319,11 @@ class Installer
 
             symlink($config_physical, $config_virtual);
         }
+
+        $cmd_chmod = "chmod -R 777 " . $dir_system . "var/";
+        self::$IO->write(": [ + ] $cmd_chmod");
+
+        exec($cmd_chmod);
     }
 
     /**
@@ -342,6 +347,7 @@ class Installer
         }
 
         $cmd_chmod = "chmod -R 777 " . $dir_system . "var/";
+        self::$IO->write(": [ + ] $cmd_chmod");
 
         exec($cmd_chmod);
     }
