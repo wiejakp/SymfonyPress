@@ -326,6 +326,9 @@ class Installer
      */
     protected static function update_symfony(Event $event): void
     {
+        $dir_shared = self::$ROOT . self::$CONFIG['dir']['shared'] . self::$CONFIG['symfony']['dir'];
+        $dir_system = self::$ROOT . self::$CONFIG['symfony']['dir'];
+
         // extracted config
         $config_system = self::$CONFIG['symfony'];
         $config_location = $config_system['dir'];
@@ -337,6 +340,10 @@ class Installer
 
             exec($cmd_update);
         }
+
+        $cmd_chmod = "chmod -R 777 " . $dir_system . "var/";
+
+        exec($cmd_chmod);
     }
 
     /**
