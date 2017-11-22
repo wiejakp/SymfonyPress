@@ -191,6 +191,7 @@ class Installer
      */
     protected static function install_symfony(Event $event): void
     {
+        $dir_private = self::$ROOT . self::$EXTRA['dir']['private'] . self::$EXTRA['symfony']['dir'];
         $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['symfony']['dir'];
         $dir_system = self::$ROOT . self::$EXTRA['symfony']['dir'];
 
@@ -199,7 +200,7 @@ class Installer
         $config_location = $config_system['config'];
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
-        $config_physical = $dir_shared . $config_location . $config_filename;
+        $config_physical = $dir_private . $config_location . $config_filename;
         $config_virtual = $dir_system . $config_location . $config_filename;
 
         if (!is_dir($config_system['dir'])) {
@@ -391,6 +392,7 @@ class Installer
     {
         $wp_cli = self::$WP_CLI;
 
+        $dir_private = self::$ROOT . self::$EXTRA['dir']['private'] . self::$EXTRA['wordpress']['dir'];
         $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['wordpress']['dir'];
         $dir_system = self::$ROOT . self::$EXTRA['wordpress']['dir'];
 
@@ -399,7 +401,7 @@ class Installer
         $config_location = $config_system['config'];
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
-        $config_physical = $dir_shared . $config_location . $config_filename;
+        $config_physical = $dir_private . $config_location . $config_filename;
         $config_virtual = $dir_system . $config_location . $config_filename;
 
         // config data
