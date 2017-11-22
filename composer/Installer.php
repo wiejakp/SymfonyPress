@@ -41,12 +41,22 @@ class Installer
     /**
      * @var array
      */
-    private static $CONFIG;
+    private static $EXTRA;
 
     /**
      * @var string
      */
     private static $ROOT;
+
+    /**
+     * @var string
+     */
+    private static $CONFIG_DIR;
+
+    /**
+     * @var string
+     */
+    private static $CONFIG_FILE;
 
     /**
      * @var string
@@ -57,11 +67,6 @@ class Installer
      * @var string
      */
     private static $PRIVATE_DIR;
-
-    /**
-     * @var string
-     */
-    private static $PRIVATE_FILE;
 
     /**
      * @var array
@@ -80,11 +85,12 @@ class Installer
 
         self::$METHOD = $method;
         self::$IO = $args[0]->getIO();
-        self::$CONFIG = $args[0]->getComposer()->getPackage()->getExtra();
+        self::$EXTRA = $args[0]->getComposer()->getPackage()->getExtra();
         self::$ROOT = dirname(dirname(__FILE__)) . '/';
-        self::$SHARED_DIR = self::$ROOT . stripslashes(self::$CONFIG['dir']['shared']);
-        self::$PRIVATE_DIR = self::$ROOT . stripslashes(self::$CONFIG['dir']['private']);
-        self::$PRIVATE_FILE = self::$PRIVATE_DIR . self::$CONFIG['config'];
+        self::$CONFIG_DIR = self::$ROOT . stripslashes(self::$EXTRA['dir']['config']);
+        self::$PRIVATE_DIR = self::$ROOT . stripslashes(self::$EXTRA['dir']['private']);
+        self::$SHARED_DIR = self::$ROOT . stripslashes(self::$EXTRA['dir']['shared']);
+        self::$CONFIG_FILE = self::$CONFIG_DIR . self::$EXTRA['config'];
         self::$WP_CLI = $args[0]->getComposer()->getConfig()->get('vendor-dir') . '/wp-cli/wp-cli/bin/wp';
         self::$WP_DIR = $args[0]->getComposer()->getConfig()->get('vendor-dir') . '/wordpress/wordpress/';
 
@@ -92,21 +98,21 @@ class Installer
             mkdir(self::$SHARED_DIR, 0777, true);
         }
 
-        if (!is_dir(self::$PRIVATE_DIR)) {
-            mkdir(self::$PRIVATE_DIR, 0777, true);
+        if (!is_dir(self::$CONFIG_DIR)) {
+            mkdir(self::$CONFIG_DIR, 0777, true);
         }
 
-        if (!file_exists(self::$PRIVATE_FILE)) {
-            touch(self::$PRIVATE_FILE);
+        if (!file_exists(self::$CONFIG_FILE)) {
+            touch(self::$CONFIG_FILE);
         }
 
-        self::$PARAMETERS = json_decode(stripslashes(file_get_contents(self::$PRIVATE_FILE)), true);
+        self::$PARAMETERS = json_decode(stripslashes(file_get_contents(self::$CONFIG_FILE)), true);
 
         // parse projects settings
         /*
-        if (!empty(self::$CONFIG)) {
-            $settings_dir = self::$CONFIG['dir'];
-            $settings_path = $settings_dir . self::$CONFIG['filename'];
+        if (!empty(self::$EXTRA)) {
+            $settings_dir = self::$EXTRA['dir'];
+            $settings_path = $settings_dir . self::$EXTRA['filename'];
 
             // create config directory when it doesn't exist
             if (!is_dir($settings_dir)) {
@@ -176,80 +182,8 @@ class Installer
             self::$IO->write(":");
             self::$IO->write(":");
 
-            file_put_contents(self::$PRIVATE_FILE, json_encode($data, JSON_PRETTY_PRINT));
+            file_put_contents(self::$CONFIG_FILE, json_encode($data, JSON_PRETTY_PRINT));
         }
-
-
-        /*
-        // local vars
-        $function = __FUNCTION__;
-
-        // store all information in following file
-        $settings_dir = self::$CONFIG['dir'];
-        $settings_path = $settings_dir . self::$CONFIG['filename'];
-
-        self::$IO->write("\n\r\n\r: METHOD STARTED: $function() \n\r:");
-
-        // if settings already exist, skip input prompts
-        if (!file_exists($settings_path)) {
-            // store all user inputs
-            $data = [];
-            $params = &$data['parameters'];
-            $project = &$data['project'];
-
-            // generate secret token
-            $secret = uniqid('SymfonyPress_', true);
-
-            self::$IO->write(": [ ! ] Server Information");
-            self::$IO->write(":");
-
-            $params['database_host'] = self::$IO->ask(": [ ? ] Database Host [localhost]: ", 'localhost');
-            $params['database_port'] = self::$IO->ask(": [ ? ] Database Port [3306]: ", '3306');
-            $params['database_name'] = self::$IO->ask(": [ ? ] Database Name [symfonypress]: ", 'symfonypress');
-            $params['database_user'] = self::$IO->ask(": [ ? ] Database User [symfonypress]: ", 'symfonypress');
-            $params['database_password'] = self::$IO->ask(": [ ? ] Database Password [symfonypress]: ", 'symfonypress');
-            $params['database_prefix'] = self::$IO->ask(": [ ? ] Database Prefix [wp_]: ", 'wp_');
-            $params['database_charset'] = self::$IO->ask(": [ ? ] Database Char Set [utf8]: ", 'utf8');
-            $params['mailer_transport'] = self::$IO->ask(": [ ? ] Mail Server Protocol [smtp]: ", 'smtp');
-            $params['mailer_host'] = self::$IO->ask(": [ ? ] Mail Server Host [127.0.0.1]: ", '127.0.0.1');
-            $params['mailer_user'] = self::$IO->ask(": [ ? ] Mail Server User [null]: ", 'null');
-            $params['mailer_password'] = self::$IO->ask(": [ ? ] Mail Server Password [null]: ", 'null');
-            $params['secret'] = self::$IO->ask(": [ ? ] Secret Token [$secret]: ", $secret);
-
-            self::$IO->write(":");
-            self::$IO->write(": [ ! ] Web Site Information");
-            self::$IO->write(":");
-
-            $project['url'] = self::$IO->ask(": [ ? ] Web Site URL [symfonypress.dev]: ", 'symfonypress.dev');
-            $project['title'] = self::$IO->ask(": [ ? ] Web Site Title [SymfonyPress]: ", 'SymfonyPress');
-
-            self::$IO->write(":");
-            self::$IO->write(": [ ! ] Administrator User Information");
-            self::$IO->write(":");
-
-            $project['mail'] = self::$IO->ask(": [ ? ] Admin E-Mail Address [symfonypress@symfonypress.dev]: ", 'symfonypress@symfonypress.dev');
-            $project['user'] = self::$IO->ask(": [ ? ] Admin User Name [symfonypress]: ", 'symfonypress');
-            $project['pass'] = self::$IO->ask(": [ ? ] Admin Password [symfonypress]: ", 'symfonypress');
-
-            self::$IO->write(":");
-            self::$IO->write(":");
-
-            try {
-                $string_yaml = Yaml::dump($data);
-                $string_encoded = filter_var($string_yaml, FILTER_SANITIZE_ENCODED);
-
-                self::$IO->write(": [ + ] echo '$string_encoded' | tee '$settings_path'");
-
-                file_put_contents($settings_path, $string_yaml);
-            } catch (Exception $exception) {
-                $error = $exception->getMessage();
-
-                self::$IO->write(": [ - ] ERROR: $error");
-            }
-        }
-
-        self::$IO->write(":\n\r: METHOD FINISHED: $function() \n\r\n\r");
-        */
     }
 
     /**
@@ -257,11 +191,11 @@ class Installer
      */
     protected static function install_symfony(Event $event): void
     {
-        $dir_shared = self::$ROOT . self::$CONFIG['dir']['shared'] . self::$CONFIG['symfony']['dir'];
-        $dir_system = self::$ROOT . self::$CONFIG['symfony']['dir'];
+        $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['symfony']['dir'];
+        $dir_system = self::$ROOT . self::$EXTRA['symfony']['dir'];
 
         // extracted config
-        $config_system = self::$CONFIG['symfony'];
+        $config_system = self::$EXTRA['symfony'];
         $config_location = $config_system['config'];
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
@@ -331,11 +265,11 @@ class Installer
      */
     protected static function update_symfony(Event $event): void
     {
-        $dir_shared = self::$ROOT . self::$CONFIG['dir']['shared'] . self::$CONFIG['symfony']['dir'];
-        $dir_system = self::$ROOT . self::$CONFIG['symfony']['dir'];
+        $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['symfony']['dir'];
+        $dir_system = self::$ROOT . self::$EXTRA['symfony']['dir'];
 
         // extracted config
-        $config_system = self::$CONFIG['symfony'];
+        $config_system = self::$EXTRA['symfony'];
         $config_location = $config_system['dir'];
 
         if (is_dir($config_location)) {
@@ -357,7 +291,7 @@ class Installer
      */
     protected static function install_symfony_symlinks(Event $event): void
     {
-        $config = self::$CONFIG['symfony'];
+        $config = self::$EXTRA['symfony'];
         $console = self::$ROOT . $config['dir'] . 'bin/console';
         $symlinks = $config['symlink'];
 
@@ -411,7 +345,7 @@ class Installer
      */
     protected static function install_symfony_config(Event $event): void
     {
-        $config = self::$CONFIG['symfony'];
+        $config = self::$EXTRA['symfony'];
         $appends = $config['append'];
         $replace = $config['replace'];
 
@@ -457,11 +391,11 @@ class Installer
     {
         $wp_cli = self::$WP_CLI;
 
-        $dir_shared = self::$ROOT . self::$CONFIG['dir']['shared'] . self::$CONFIG['wordpress']['dir'];
-        $dir_system = self::$ROOT . self::$CONFIG['wordpress']['dir'];
+        $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['wordpress']['dir'];
+        $dir_system = self::$ROOT . self::$EXTRA['wordpress']['dir'];
 
         // extracted config
-        $config_system = self::$CONFIG['wordpress'];
+        $config_system = self::$EXTRA['wordpress'];
         $config_location = $config_system['config'];
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
@@ -540,7 +474,7 @@ class Installer
         $wp_cli = self::$WP_CLI;
 
         // extracted config
-        $config_system = self::$CONFIG['wordpress'];
+        $config_system = self::$EXTRA['wordpress'];
         $config_location = $config_system['dir'];
 
         if (is_dir($config_location)) {
@@ -565,7 +499,7 @@ class Installer
     {
         $wp_cli = self::$WP_CLI;
 
-        $config = self::$CONFIG['wordpress'];
+        $config = self::$EXTRA['wordpress'];
         $symlinks = $config['symlink'];
 
         // install symlinks
@@ -613,7 +547,7 @@ class Installer
     {
         $wp_cli = self::$WP_CLI;
 
-        $config = self::$CONFIG['wordpress'];
+        $config = self::$EXTRA['wordpress'];
         $symlinks = $config['symlink'];
 
         // install symlinks

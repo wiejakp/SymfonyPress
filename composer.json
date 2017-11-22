@@ -42,6 +42,7 @@
   },
   "extra": {
     "dir": {
+      "config": "config/",
       "shared": "shared/",
       "private": "private/"
     },
