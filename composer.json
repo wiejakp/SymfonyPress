@@ -44,7 +44,8 @@
     "dir": {
       "config": "config/",
       "shared": "shared/",
-      "private": "private/"
+      "private": "private/",
+      "public": "public/"
     },
     "config": "config.json",
     "symfony": {
@@ -64,18 +65,18 @@
       "symlink": [
         {
           "input_filename": "*",
-          "input_dir": "shared/symfony/src/AppBundle/Command/",
+          "input_dir": "symfony/src/AppBundle/Command/",
           "output_dir": "src/AppBundle/Command/",
           "command": "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
         },
         {
           "input_filename": "*",
-          "input_dir": "shared/symfony/src/AppBundle/Controller/",
+          "input_dir": "symfony/src/AppBundle/Controller/",
           "output_dir": "src/AppBundle/Controller/"
         },
         {
           "input_filename": "*",
-          "input_dir": "shared/symfony/src/AppBundle/Resources/views/",
+          "input_dir": "symfony/src/AppBundle/Resources/views/",
           "output_dir": "src/AppBundle/Resources/views/"
         }
       ],
@@ -104,12 +105,12 @@
       "symlink": [
         {
           "input_filename": "index.php",
-          "input_dir": "shared/wordpress/",
+          "input_dir": "wordpress/",
           "output_dir": ""
         },
         {
           "input_filename": ".htaccess",
-          "input_dir": "shared/wordpress/",
+          "input_dir": "wordpress/",
           "output_dir": ""
         }
       ]

@@ -291,7 +291,7 @@ class Installer
             $cmd_command = array_key_exists('command', $symlink) ? "$console " . $symlink['command'] : null;
 
             $abs_root = self::$PUBLIC_DIR . $root;
-            $abs_input = self::$PUBLIC_DIR . $input_dir . $input_file;
+            $abs_input = self::$SHARED_DIR . $input_dir . $input_file;
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
@@ -412,7 +412,6 @@ class Installer
         if (!file_exists($config_virtual)) {
             $cmd_config = implode(' ', [
                 "$wp_cli config create",
-                "--path='" . $config_location . "'",
                 "--dbname='" . $parameters['database_name'] . "'",
                 "--dbuser='" . $parameters['database_user'] . "'",
                 "--dbpass='" . $parameters['database_password'] . "'",
@@ -423,11 +422,9 @@ class Installer
             ]);
 
             self::$IO->write(": [ + ] $cmd_config");
-
             exec($cmd_config);
 
             self::$IO->write(": [ + ] mv '$config_virtual' '$config_physical'");
-
             rename($config_virtual, $config_physical);
         }
 
@@ -460,15 +457,13 @@ class Installer
     {
         $wp_cli = self::$WP_CLI;
 
-        // extracted config
-        $config_system = self::$EXTRA['wordpress'];
-        $config_location = $config_system['dir'];
+        $dir_public = self::$PUBLIC_DIR . self::$EXTRA['wordpress']['dir'];
 
-        if (is_dir($config_location)) {
+        if (is_dir($dir_public)) {
             // unlink files to prevent overriding originals
             self::install_wordpress_unlink($event);
 
-            $cmd_update = "$wp_cli core update --path='$config_location'";
+            $cmd_update = "$wp_cli core update --path='$dir_public'";
 
             self::$IO->write(": [ + ] $cmd_update");
 
@@ -484,8 +479,6 @@ class Installer
      */
     protected static function install_wordpress_symlinks(Event $event): void
     {
-        $wp_cli = self::$WP_CLI;
-
         $config = self::$EXTRA['wordpress'];
         $symlinks = $config['symlink'];
 
@@ -496,8 +489,8 @@ class Installer
             $input_dir = $symlink['input_dir'];
             $output_dir = $symlink['output_dir'];
 
-            $abs_root = self::$ROOT . $root;
-            $abs_input = self::$ROOT . $input_dir . $input_file;
+            $abs_root = self::$PUBLIC_DIR . $root;
+            $abs_input = self::$SHARED_DIR . $input_dir . $input_file;
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
@@ -542,8 +535,8 @@ class Installer
             $input_dir = $symlink['input_dir'];
             $output_dir = $symlink['output_dir'];
 
-            $abs_root = self::$ROOT . $root;
-            $abs_input = self::$ROOT . $input_dir . $input_file;
+            $abs_root = self::$PUBLIC_DIR . $root;
+            $abs_input = self::$SHARED_DIR . $input_dir . $input_file;
 
             foreach (glob($abs_input) as $file) {
                 $base = basename($file);
