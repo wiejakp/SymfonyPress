@@ -66,6 +66,11 @@ class Installer
     /**
      * @var string
      */
+    private static $PUBLIC_DIR;
+
+    /**
+     * @var string
+     */
     private static $PRIVATE_DIR;
 
     /**
@@ -87,9 +92,10 @@ class Installer
         self::$IO = $args[0]->getIO();
         self::$EXTRA = $args[0]->getComposer()->getPackage()->getExtra();
         self::$ROOT = dirname(dirname(__FILE__)) . '/';
-        self::$CONFIG_DIR = self::$ROOT . stripslashes(self::$EXTRA['dir']['config']);
-        self::$PRIVATE_DIR = self::$ROOT . stripslashes(self::$EXTRA['dir']['private']);
-        self::$SHARED_DIR = self::$ROOT . stripslashes(self::$EXTRA['dir']['shared']);
+        self::$CONFIG_DIR = self::$ROOT . self::$EXTRA['dir']['config'];
+        self::$PRIVATE_DIR = self::$ROOT . self::$EXTRA['dir']['private'];
+        self::$SHARED_DIR = self::$ROOT . self::$EXTRA['dir']['shared'];
+        self::$PUBLIC_DIR = self::$ROOT . self::$EXTRA['dir']['public'];
         self::$CONFIG_FILE = self::$CONFIG_DIR . self::$EXTRA['config'];
         self::$WP_CLI = $args[0]->getComposer()->getConfig()->get('vendor-dir') . '/wp-cli/wp-cli/bin/wp';
         self::$WP_DIR = $args[0]->getComposer()->getConfig()->get('vendor-dir') . '/wordpress/wordpress/';
@@ -107,24 +113,6 @@ class Installer
         }
 
         self::$PARAMETERS = json_decode(stripslashes(file_get_contents(self::$CONFIG_FILE)), true);
-
-        // parse projects settings
-        /*
-        if (!empty(self::$EXTRA)) {
-            $settings_dir = self::$EXTRA['dir'];
-            $settings_path = $settings_dir . self::$EXTRA['filename'];
-
-            // create config directory when it doesn't exist
-            if (!is_dir($settings_dir)) {
-                mkdir($settings_dir, 0777, true);
-            }
-
-            // parse settings if they are already set
-            if (file_exists($settings_path)) {
-                self::$SETTINGS = Yaml::parse(file_get_contents($settings_path));
-            }
-        }
-        */
 
         self::$IO->write("\n\r\n\r: METHOD STARTED: $method() \n\r:");
 
@@ -191,9 +179,8 @@ class Installer
      */
     protected static function install_symfony(Event $event): void
     {
-        $dir_private = self::$ROOT . self::$EXTRA['dir']['private'] . self::$EXTRA['symfony']['dir'];
-        $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['symfony']['dir'];
-        $dir_system = self::$ROOT . self::$EXTRA['symfony']['dir'];
+        $dir_private = self::$PRIVATE_DIR . self::$EXTRA['symfony']['dir'];
+        $dir_public = self::$PUBLIC_DIR . self::$EXTRA['symfony']['dir'];
 
         // extracted config
         $config_system = self::$EXTRA['symfony'];
@@ -201,10 +188,10 @@ class Installer
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
         $config_physical = $dir_private . $config_location . $config_filename;
-        $config_virtual = $dir_system . $config_location . $config_filename;
+        $config_virtual = $dir_public . $config_location . $config_filename;
 
         if (!is_dir($config_system['dir'])) {
-            $cmd_create = "composer create-project '$config_version' '$dir_system' --no-interaction";
+            $cmd_create = "composer create-project '$config_version' '$dir_public' --no-interaction";
 
             self::$IO->write(": [ + ] $cmd_create");
 
@@ -219,8 +206,8 @@ class Installer
                     $repo_version = $require['version'];
                     $repo_url = $require['url'];
 
-                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --working-dir '$dir_system'";
-                    $cmd_require = "composer require $repo_name '$repo_version' --working-dir '$dir_system'";
+                    $cmd_repository = "composer config repositories.$repo_title '$repo_type' '$repo_url' --working-dir '$dir_public'";
+                    $cmd_require = "composer require $repo_name '$repo_version' --working-dir '$dir_public'";
 
                     self::$IO->write(": [ + ] $cmd_repository");
                     exec($cmd_repository);
@@ -255,7 +242,7 @@ class Installer
             symlink($config_physical, $config_virtual);
         }
 
-        $cmd_chmod = "chmod -R 777 " . $dir_system . "var/";
+        $cmd_chmod = "chmod -R 777 " . $dir_public . "var/";
         self::$IO->write(": [ + ] $cmd_chmod");
 
         exec($cmd_chmod);
@@ -266,8 +253,7 @@ class Installer
      */
     protected static function update_symfony(Event $event): void
     {
-        $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['symfony']['dir'];
-        $dir_system = self::$ROOT . self::$EXTRA['symfony']['dir'];
+        $dir_public = self::$PUBLIC_DIR . self::$EXTRA['symfony']['dir'];
 
         // extracted config
         $config_system = self::$EXTRA['symfony'];
@@ -281,7 +267,7 @@ class Installer
             exec($cmd_update);
         }
 
-        $cmd_chmod = "chmod -R 777 " . $dir_system . "var/";
+        $cmd_chmod = "chmod -R 777 " . $dir_public . "var/";
         self::$IO->write(": [ + ] $cmd_chmod");
 
         exec($cmd_chmod);
@@ -293,7 +279,7 @@ class Installer
     protected static function install_symfony_symlinks(Event $event): void
     {
         $config = self::$EXTRA['symfony'];
-        $console = self::$ROOT . $config['dir'] . 'bin/console';
+        $console = self::$PUBLIC_DIR . $config['dir'] . 'bin/console';
         $symlinks = $config['symlink'];
 
         // install symlinks
@@ -304,8 +290,8 @@ class Installer
             $output_dir = $symlink['output_dir'];
             $cmd_command = array_key_exists('command', $symlink) ? "$console " . $symlink['command'] : null;
 
-            $abs_root = self::$ROOT . $root;
-            $abs_input = self::$ROOT . $input_dir . $input_file;
+            $abs_root = self::$PUBLIC_DIR . $root;
+            $abs_input = self::$PUBLIC_DIR . $input_dir . $input_file;
             $abs_output = $abs_root . $output_dir;
 
             if (!file_exists($abs_output)) {
@@ -352,7 +338,7 @@ class Installer
 
         foreach ($appends as $file) {
             $dir_source = self::$ROOT . $file['source'];
-            $dir_destination = self::$ROOT . $config['dir'] . $file['destination'];
+            $dir_destination = self::$PUBLIC_DIR . $config['dir'] . $file['destination'];
 
             $array_source = Yaml::parse(file_get_contents($dir_source));
             $array_destination = Yaml::parse(file_get_contents($dir_destination));
@@ -370,7 +356,7 @@ class Installer
 
         foreach ($replace as $file) {
             $dir_source = self::$ROOT . $file['source'];
-            $dir_destination = self::$ROOT . $config['dir'] . $file['destination'];
+            $dir_destination = self::$PUBLIC_DIR . $config['dir'] . $file['destination'];
 
             $array_source = Yaml::parse(file_get_contents($dir_source));
 
@@ -392,9 +378,8 @@ class Installer
     {
         $wp_cli = self::$WP_CLI;
 
-        $dir_private = self::$ROOT . self::$EXTRA['dir']['private'] . self::$EXTRA['wordpress']['dir'];
-        $dir_shared = self::$ROOT . self::$EXTRA['dir']['shared'] . self::$EXTRA['wordpress']['dir'];
-        $dir_system = self::$ROOT . self::$EXTRA['wordpress']['dir'];
+        $dir_private = self::$PRIVATE_DIR . self::$EXTRA['wordpress']['dir'];
+        $dir_public = self::$PUBLIC_DIR . self::$EXTRA['wordpress']['dir'];
 
         // extracted config
         $config_system = self::$EXTRA['wordpress'];
@@ -402,14 +387,14 @@ class Installer
         $config_filename = $config_system['filename'];
         $config_version = $config_system['version'];
         $config_physical = $dir_private . $config_location . $config_filename;
-        $config_virtual = $dir_system . $config_location . $config_filename;
+        $config_virtual = $dir_public . $config_location . $config_filename;
 
         // config data
         $parameters = self::$PARAMETERS['parameters'];
         $project = self::$PARAMETERS['project'];
 
-        if (!is_dir($dir_system)) {
-            $cmd_download = "$wp_cli core download --version='$config_version' --path='$dir_system'";
+        if (!is_dir($dir_public)) {
+            $cmd_download = "$wp_cli core download --version='$config_version' --path='$dir_public'";
 
             self::$IO->write(": [ + ] $cmd_download");
 
@@ -434,7 +419,7 @@ class Installer
                 "--dbhost='" . $parameters['database_host'] . "'",
                 "--dbprefix='" . $parameters['database_prefix'] . "'",
                 "--dbcharset='" . $parameters['database_charset'] . "'",
-                "--path='" . $dir_system . "'",
+                "--path='" . $dir_public . "'",
             ]);
 
             self::$IO->write(": [ + ] $cmd_config");
@@ -460,7 +445,7 @@ class Installer
             "--admin_password='" . $project['pass'] . "'",
             "--admin_email='" . $project['mail'] . "'",
             "--skip-email",
-            "--path='" . $dir_system . "'",
+            "--path='" . $dir_public . "'",
         ]);
 
         self::$IO->write(": [ + ] $cmd_core");
