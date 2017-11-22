@@ -23,13 +23,13 @@ function symfony($id)
     return $container->get($id);
 }
 
-$loader = require __DIR__ . '/../../symfony/vendor/autoload.php';
+$loader = require __DIR__ . '/../../public/symfony/vendor/autoload.php';
 
-require_once __DIR__ . '/../../wordpress/wp-load.php';
-require_once __DIR__ . '/../../symfony/var/bootstrap.php.cache';
+require_once __DIR__ . '/../../public/wordpress/wp-load.php';
+require_once __DIR__ . '/../../public/symfony/var/bootstrap.php.cache';
 
 // Load application kernel
-require_once __DIR__ . '/../../symfony/app/AppKernel.php';
+require_once __DIR__ . '/../../public/symfony/app/AppKernel.php';
 
 $sfKernel = new AppKernel('dev', true);
 $sfKernel->loadClassCache();
