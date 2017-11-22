@@ -190,7 +190,7 @@ class Installer
         $config_physical = $dir_private . $config_location . $config_filename;
         $config_virtual = $dir_public . $config_location . $config_filename;
 
-        if (!is_dir($config_system['dir'])) {
+        if (!is_dir($dir_public)) {
             $cmd_create = "composer create-project '$config_version' '$dir_public' --no-interaction";
 
             self::$IO->write(": [ + ] $cmd_create");
