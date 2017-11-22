@@ -547,8 +547,6 @@ class Installer
      */
     protected static function install_wordpress_unlink(Event $event): void
     {
-        $wp_cli = self::$WP_CLI;
-
         $config = self::$EXTRA['wordpress'];
         $symlinks = $config['symlink'];
 
