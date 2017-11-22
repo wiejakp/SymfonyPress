@@ -16,5 +16,9 @@
 
     {{ wp_get_sidebar() }}
 </div>
-
+<script>
+    jQuery(function() {
+        jQuery('body').removeClass('error404');
+    });
+</script>
 {{ wp_get_footer() }}
