@@ -1,0 +1,24 @@
+{{ wp_get_header() }}
+
+<div class="wrap">
+    <div id="primary" class="content-area">
+        <main id="main" class="site-main" role="main">
+            <article class="post type-post format-standard">
+                <header class="entry-header">
+                    <h1 class="entry-title">{% block title %}{% endblock %}</h1>
+                </header>
+                <div class="entry-content">
+                    {% block body %}{% endblock %}
+                </div>
+            </article>
+        </main>
+    </div>
+
+    {{ wp_get_sidebar() }}
+</div>
+<script>
+    jQuery(function() {
+        jQuery('body').removeClass('error404');
+    });
+</script>
+{{ wp_get_footer() }}

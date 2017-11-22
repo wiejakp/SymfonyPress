@@ -1,0 +1,14 @@
+{% extends 'AppBundle:default:base.html.twig' %}
+
+{% set _user = app.user %}
+{% set _username = _user ? _user.displayName : 'Anonymous' %}
+
+{% block title %}Welcome: {{ _username }}{% endblock %}
+
+{% block body %}
+    <ul>
+        <li><a href="/wp-login.php">WP Login</a></li>
+        <li><a href="/symfony">Symfony Controller</a></li>
+        <li><a href="/wordpress">WordPress Controller</a></li>
+    </ul>
+{% endblock %}
