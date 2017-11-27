@@ -16,18 +16,14 @@
   },
   "require": {
     "php": "~7.1",
-    "symfony/yaml": "^3.3"
-
+    "wp-cli/wp-cli": "^1.4"
   },
   "scripts": {
-    "installer_wordpress": [
-      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::run"
-    ],
     "post-install-cmd": [
-      "@installer_wordpress"
+      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::install"
     ],
     "post-update-cmd": [
-      "@installer_wordpress"
+      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::update"
     ]
   },
   "extra": {
@@ -43,6 +39,16 @@
       "wordpress": {
         "dir": "wordpress/",
         "config": "wp-config.php",
+        "version": "4.8.1",
+        "console": "wp-cli/wp-cli/bin/wp",
+        "require": {
+          "wp-cli/wp-cli": "^1.4"
+        }
+      },
+      "symfony": {
+        "dir": "symfony/",
+        "config": "app/config/parameters.yml",
+        "console": "bin/console",
         "require": {
           "wp-cli/wp-cli": "^1.4"
         }

@@ -4,6 +4,8 @@ namespace wiejakp\SymfonyPress\Composer;
 
 // php classes
 use Exception;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 
 // composer classes
 use Composer\Script\Event;
@@ -29,6 +31,7 @@ class BaseInstaller
     public static $BASE_DIRS;
     public static $BASE_FILE;
     public static $BASE_CONF;
+    public static $BASE_VENDOR;
 
     /**
      * @param $method
@@ -53,9 +56,10 @@ class BaseInstaller
         self::$BASE_ROOT = dirname(dirname(__FILE__)) . '/';
         self::$BASE_DIRS = self::$BASE['dirs'];
         self::$BASE_FILE = self::$BASE['file'];
+        self::$BASE_VENDOR = self::$EVENT->getComposer()->getConfig()->get('vendor-dir') . '/';
 
         // composer cli
-        self::$COMPOSER = self::$BASE_ROOT . 'composer.pharK';
+        self::$COMPOSER = self::$BASE_ROOT . 'composer.phar';
 
         self::base_init($class);
 
@@ -87,7 +91,7 @@ class BaseInstaller
 
     protected static function base_init_conf($class): ?iterable
     {
-        $conf_array = self::$BASE_CONF;
+        $conf_array = &self::$BASE_CONF;
         $conf_file = self::$BASE_FILE;
         $inout = self::$INOUT;
 
@@ -148,6 +152,53 @@ class BaseInstaller
         return $conf_array;
     }
 
+    public static function base_vendor_require($repository, $version)
+    {
+        $isInstalled = self::base_vendor_check($repository);
+
+        $composer = self::$COMPOSER;
+        $cmd_value = null;
+        $cmd_code = null;
+
+        if (!$isInstalled) {
+            $cmd_text = "php $composer require $repository:$version";
+
+            exec($cmd_text, $cmd_value, $cmd_code);
+        }
+
+        return $cmd_code == 0 ? true : false;
+    }
+
+    public static function base_vendor_check(string $repository = null, string $version = '*'): bool
+    {
+        $composer = self::$EVENT->getComposer();
+
+        $composerManager = $composer->getRepositoryManager();
+        $composerRepository = $composerManager->getLocalRepository();
+        $composerPackage = $composerRepository->findPackage($repository, $version);
+
+        if ($composerPackage) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function base_vendor_path(string $repository = null, string $version = '*'): ?string
+    {
+        $composer = self::$EVENT->getComposer();
+
+        $composerRepositoryManager = $composer->getRepositoryManager();
+        $composerInstallationManager = $composer->getInstallationManager();
+        $composerPackage = $composerRepositoryManager->findPackage($repository, $version);
+
+        if ($composerPackage) {
+            return $composerInstallationManager->getInstallPath($composerPackage);
+        }
+
+        return null;
+    }
+
     /**
      * @return string
      */
@@ -169,5 +220,87 @@ class BaseInstaller
         }
 
         return false;
+    }
+
+    public static function command(string $command, bool $returnValue = true, bool $returnCode = true)
+    {
+        $command_return = [];
+        $command_value = null;
+        $command_code = null;
+
+        self::$INOUT->write($command);
+
+        exec($command, $command_value, $command_code);
+
+        if ($returnValue) {
+            $command_return['value'] = $command_value;
+        }
+
+        if ($returnCode) {
+            $command_return['code'] = $command_code;
+        }
+
+        return $command_return;
+    }
+
+    public static function dir_create(string $path, string $permission = '0775')
+    {
+        $command_mkdir = "mkdir --parents $path";
+        $command_chmod = "chmod $permission $path";
+
+        if (!is_dir($path) && !file_exists($path)) {
+            self::command($command_mkdir);
+            self::command($command_chmod);
+        }
+    }
+
+    public static function file_list(string $path): iterable
+    {
+        $rdi = new RecursiveDirectoryIterator($path);
+        $rii = new RecursiveIteratorIterator($rdi);
+
+        $files = [];
+
+        foreach ($rii as $file) {
+            if ($file->isDir()) {
+                continue;
+            }
+            $files[] = $file->getPathname();
+        }
+
+
+        return $files;
+    }
+
+    public static function file_move(string $source, string $destination)
+    {
+        $command_copy = "cp -r '$source' '$destination'";
+        $command_remove = "rm -rf '$source'";
+
+        self::command($command_copy);
+        self::command($command_remove);
+    }
+
+    public static function file_remove(string $path)
+    {
+        $command = "rm -rf '$path'";
+
+        self::command($command);
+    }
+
+    public static function symlink_create(string $target, string $path)
+    {
+        $path = rtrim($path, '/');
+        $command = "ln --symbolic --force '$target' '$path'";
+
+        return self::command($command);
+    }
+
+    public static function symlink_remove(string $path)
+    {
+        $path = rtrim($path, '/');
+        $command = "rm '$path'";
+
+        return self::command($command);
     }
 }

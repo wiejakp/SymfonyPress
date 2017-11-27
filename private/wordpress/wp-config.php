@@ -46,14 +46,14 @@ define( 'DB_COLLATE', '' );
  *
  * @since 2.6.0
  */
-define( 'AUTH_KEY',         'H1`y4q.S3cNr2H4DjWlr1xWTGILu-zgT84MJK6!5?Cseowe.*:>kl^4h=LrS2wr}' );
-define( 'SECURE_AUTH_KEY',  'EQXIhAbWH{zG$;_)YKyDveG}xJMQLf6gJ:aR.Q8mQaMV4}pBer^E$UhMjZ2?[+;r' );
-define( 'LOGGED_IN_KEY',    '/uz5S7K$<!Cx7T9FxBq}#?:JYGV(pF|=GhIPGRL@Zocv}jIq`d0G-#u!X[o5T~W0' );
-define( 'NONCE_KEY',        '#qlf</Bq@)uVS1+EgMY?=DH6.~+v=cckqg-FZ(>/,(I7QQnjdgG8IYgV3y+(<8Su' );
-define( 'AUTH_SALT',        'A7eb=-2M5h x>.zk8~U}EfaK=3-EAM }iTq{tpu=l:~:[r|67V8mXRWnPTmp)hq:' );
-define( 'SECURE_AUTH_SALT', 'xCH_%=(.DP>ST;Ktb4ZwbwR}<S:~1j<P@Uep>|-D7v}Mj|Dt2x,[_Kgt{0xm#+%>' );
-define( 'LOGGED_IN_SALT',   'T>FG-aek_nkqnU#vgc68/MDJYp8oh32Abyj%%Llc+M4K_V)YMS0%qwrDb*h3tP!f' );
-define( 'NONCE_SALT',       'qlovwZv[#uGx:TNS[7tu<M(}Q/YSP8-B5&wuJK[W>1I(v-lTNAVq|=!XTLV)+_~{' );
+define( 'AUTH_KEY',         '(+du14Gg(MW&bi[Q3%cx:|Ht.ug077@yt.Gu~{YJUVr`1.^8iK!{F2GW4_CilzN(' );
+define( 'SECURE_AUTH_KEY',  'O|{$~0+~@+1tI>U:d@@n,/4~I,w*&w6=;u/8Yoo&H1yg^B,XGX{W!YGV<XBIKIO7' );
+define( 'LOGGED_IN_KEY',    'Fd$4J$<P6.eg(M2Px)B8r+RJND[Ht/ahSB%uyG`W}:X]}k~q^&lTk wHh|!UD8[.' );
+define( 'NONCE_KEY',        'U%rrKH4eu:~WGd8/j$m?8d4gOWZ$R=KQTo8nN;^?AX*9W~PKzsiE}a#v-M#&ENud' );
+define( 'AUTH_SALT',        'eb9eaSK1C84iAyzywWV$Mh#mh@cFIt>|>~7x;l~/rn+wgq:#E]uMPzDuT6>rSP)Y' );
+define( 'SECURE_AUTH_SALT', '^S3~jOSbd;2<xgGR60^WUG^vzy+_XQ#lI[@]DA!kQcNH3l8UWx8t3|j*.F;UC.v=' );
+define( 'LOGGED_IN_SALT',   'l>qvK[KO/y}r|v/;JrAuZ!s19wx/yz]zjYAob(KH~Z0rI|=E.?_-w5u2:KYAyr<P' );
+define( 'NONCE_SALT',       ']*puyv,DG4gulN($M4r1aU[Jk0$YbUiFGdyrFOlK/60+ =>:2g5> Fp6(r]qnJ+p' );
 
 /**
  * WordPress Database Table prefix.
