@@ -16,104 +16,57 @@
   },
   "require": {
     "php": "~7.1",
-    "symfony/yaml": "^3.3",
     "wp-cli/wp-cli": "^1.4"
   },
   "scripts": {
-    "symfonypress-install": [
-      "wiejakp\\SymfonyPress\\Composer\\Installer::input",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_symlinks",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_wordpress_symlinks",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::install_symfony_config"
-    ],
-    "symfonypress-update": [
-      "wiejakp\\SymfonyPress\\Composer\\Installer::update_symfony",
-      "wiejakp\\SymfonyPress\\Composer\\Installer::update_wordpress"
-    ],
     "post-install-cmd": [
-      "@symfonypress-install"
+      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::install",
+      "wiejakp\\SymfonyPress\\Composer\\SymfonyInstaller::install"
     ],
     "post-update-cmd": [
-      "@symfonypress-install",
-      "@symfonypress-update"
+      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::update",
+      "wiejakp\\SymfonyPress\\Composer\\SymfonyInstaller::update"
     ]
   },
   "extra": {
-    "dir": {
-      "config": "config/",
-      "shared": "shared/",
-      "private": "private/",
-      "public": "public/"
+    "base": {
+      "dirs": {
+        "composer": "composer/",
+        "private": "private/",
+        "shared": "shared/",
+        "public": "public/"
+      },
+      "file": "private/config.json"
     },
-    "config": "config.json",
-    "symfony": {
-      "dir": "symfony/",
-      "config": "app/config/",
-      "filename": "parameters.yml",
-      "version": "symfony/framework-standard-edition",
-      "require": [
-        {
-          "user": "wiejakp",
-          "title": "wordpress-bundle",
-          "version": "dev-master",
-          "type": "vcs",
-          "url": "https://github.com/wiejakp/WordPressBundle"
-        }
-      ],
-      "symlink": [
-        {
-          "input_filename": "*",
-          "input_dir": "symfony/src/AppBundle/Command/",
-          "output_dir": "src/AppBundle/Command/",
-          "command": "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+    "installers": {
+      "wordpress": {
+        "dir": "wordpress/",
+        "config": "wp-config.php",
+        "version": "4.8.1",
+        "console": "wp-cli/wp-cli/bin/wp"
+      },
+      "symfony": {
+        "dir": "symfony/",
+        "config": "app/config/parameters.yml",
+        "console": "bin/console",
+        "edition": "symfony/framework-standard-edition",
+        "version": "3.3.*",
+        "repository": [
+          {
+            "user": "wiejakp",
+            "title": "wordpress-bundle",
+            "version": "dev-master",
+            "type": "vcs",
+            "url": "https://github.com/wiejakp/WordPressBundle"
+          }
+        ],
+        "require": {
+          "wiejakp/wordpress-bundle": "dev-master"
         },
-        {
-          "input_filename": "*",
-          "input_dir": "symfony/src/AppBundle/Controller/",
-          "output_dir": "src/AppBundle/Controller/"
-        },
-        {
-          "input_filename": "*",
-          "input_dir": "symfony/src/AppBundle/Resources/views/",
-          "output_dir": "src/AppBundle/Resources/views/"
-        }
-      ],
-      "append": [
-        {
-          "source": "composer/config/symfony/config.yml",
-          "destination": "app/config/config.yml"
-        },
-        {
-          "source": "composer/config/symfony/routing.yml",
-          "destination": "app/config/routing.yml"
-        }
-      ],
-      "replace": [
-        {
-          "source": "composer/config/symfony/security.yml",
-          "destination": "app/config/security.yml"
-        }
-      ]
-    },
-    "wordpress": {
-      "dir": "wordpress/",
-      "config": "",
-      "filename": "wp-config.php",
-      "version": "4.8.2",
-      "symlink": [
-        {
-          "input_filename": "index.php",
-          "input_dir": "wordpress/",
-          "output_dir": ""
-        },
-        {
-          "input_filename": ".htaccess",
-          "input_dir": "wordpress/",
-          "output_dir": ""
-        }
-      ]
+        "command": [
+          "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+        ]
+      }
     }
   }
 }
