@@ -31,7 +31,7 @@ class SymfonyController extends Controller
             'postStatus' => 'publish',
         ]);
 
-        return $this->render('AppBundle:symfony:symfony.html.twig', [
+        return $this->render('AppBundle:symfony:root.html.twig', [
             'users' => $users,
             'pages' => $pages,
             'posts' => $posts,
