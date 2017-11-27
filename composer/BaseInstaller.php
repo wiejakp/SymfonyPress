@@ -152,21 +152,46 @@ class BaseInstaller
         return $conf_array;
     }
 
-    public static function base_vendor_require($repository, $version)
+    public static function base_vendor_require(string $repository, string $version, ?string $directory = null)
     {
         $isInstalled = self::base_vendor_check($repository);
 
         $composer = self::$COMPOSER;
-        $cmd_value = null;
-        $cmd_code = null;
+        $cmd_return = null;
 
         if (!$isInstalled) {
-            $cmd_text = "php $composer require $repository:$version";
+            $cmd_require = "php $composer require $repository:$version";
 
-            exec($cmd_text, $cmd_value, $cmd_code);
+            if ($directory) {
+                $cmd_require .= " --working-dir='$directory'";
+            }
+
+            $cmd_return = self::command($cmd_require);
         }
 
-        return $cmd_code == 0 ? true : false;
+        return $cmd_return ? $cmd_return['code'] == 0 ? true : false : false;
+    }
+
+    public static function base_vendor_repository(array $repository, ?string $directory = null)
+    {
+        $composer = self::$COMPOSER;
+
+        var_dump($repository);
+
+        $repo_title = $repository['title'];
+        $repo_json = json_encode([
+            'type' => $repository['type'],
+            'url' => $repository['url'],
+            'version' => $repository['version'],
+        ]);
+
+        $cmd_repository = "php $composer config repositories.$repo_title '$repo_json'";
+
+        if ($directory) {
+            $cmd_repository .= " --file='" . $directory . "composer.json'";
+        }
+
+        self::command($cmd_repository);
     }
 
     public static function base_vendor_check(string $repository = null, string $version = '*'): bool
@@ -291,6 +316,12 @@ class BaseInstaller
     public static function symlink_create(string $target, string $path)
     {
         $path = rtrim($path, '/');
+        $root = dirname($path);
+
+        if (!file_exists($root)) {
+            self::dir_create($root);
+        }
+
         $command = "ln --symbolic --force '$target' '$path'";
 
         return self::command($command);

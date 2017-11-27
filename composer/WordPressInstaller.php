@@ -19,9 +19,6 @@ class WordPressInstaller extends BaseInstaller
     private static $DIR_SHARED;
     private static $DIR_PUBLIC;
 
-    // installer files
-    private static $FILE_CONFIG;
-
     private static function init()
     {
         // installer config

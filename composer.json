@@ -20,10 +20,12 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::install"
+      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::install",
+      "wiejakp\\SymfonyPress\\Composer\\SymfonyInstaller::install"
     ],
     "post-update-cmd": [
-      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::update"
+      "wiejakp\\SymfonyPress\\Composer\\WordPressInstaller::update",
+      "wiejakp\\SymfonyPress\\Composer\\SymfonyInstaller::update"
     ]
   },
   "extra": {
@@ -40,18 +42,29 @@
         "dir": "wordpress/",
         "config": "wp-config.php",
         "version": "4.8.1",
-        "console": "wp-cli/wp-cli/bin/wp",
-        "require": {
-          "wp-cli/wp-cli": "^1.4"
-        }
+        "console": "wp-cli/wp-cli/bin/wp"
       },
       "symfony": {
         "dir": "symfony/",
         "config": "app/config/parameters.yml",
         "console": "bin/console",
+        "edition": "symfony/framework-standard-edition",
+        "version": "3.3.*",
+        "repository": [
+          {
+            "user": "wiejakp",
+            "title": "wordpress-bundle",
+            "version": "dev-master",
+            "type": "vcs",
+            "url": "https://github.com/wiejakp/WordPressBundle"
+          }
+        ],
         "require": {
-          "wp-cli/wp-cli": "^1.4"
-        }
+          "wiejakp/wordpress-bundle": "dev-master"
+        },
+        "command": [
+          "symfonypress:enable 'Ekino\\WordpressBundle\\EkinoWordpressBundle'"
+        ]
       }
     }
   }
