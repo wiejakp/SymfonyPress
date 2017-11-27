@@ -15,6 +15,7 @@ class SymfonyInstaller extends BaseInstaller
     private static $CONSOLE;
 
     // installer directories
+    private static $DIR_APPEND;
     private static $DIR_PRIVATE;
     private static $DIR_SHARED;
     private static $DIR_PUBLIC;
@@ -26,6 +27,7 @@ class SymfonyInstaller extends BaseInstaller
         self::$SCRIPT = self::$INSTALLERS[self::$PROJECT];
 
         // config dirs
+        self::$DIR_APPEND = self::$BASE_DIRS['private'] . 'composer/append/symfony/';
         self::$DIR_PRIVATE = self::$BASE_DIRS['private'] . self::$SCRIPT['dir'];
         self::$DIR_SHARED = self::$BASE_DIRS['shared'] . self::$SCRIPT['dir'];
         self::$DIR_PUBLIC = self::$BASE_DIRS['public'] . self::$SCRIPT['dir'];
@@ -65,6 +67,7 @@ class SymfonyInstaller extends BaseInstaller
         self::install_required();
         self::install_shared();
         self::install_command();
+        self::install_append();
     }
 
     private static function install_project()
@@ -136,5 +139,12 @@ class SymfonyInstaller extends BaseInstaller
 
             self::command($cmd);
         }
+    }
+
+    private static function install_append()
+    {
+        $files = self::file_list(self::$DIR_APPEND);
+
+        var_dump($files);
     }
 }

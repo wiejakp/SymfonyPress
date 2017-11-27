@@ -176,8 +176,6 @@ class BaseInstaller
     {
         $composer = self::$COMPOSER;
 
-        var_dump($repository);
-
         $repo_title = $repository['title'];
         $repo_json = json_encode([
             'type' => $repository['type'],
