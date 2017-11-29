@@ -146,7 +146,7 @@ class SymfonyInstaller extends BaseInstaller
 
         if ($required) {
             foreach ($required as $repository => $version) {
-                self::base_vendor_require($repository, $version, self::$DIR_PUBLIC);
+                self::base_vendor_require($repository, '*', self::$DIR_PUBLIC);
             }
         }
     }

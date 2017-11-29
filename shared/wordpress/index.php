@@ -1,51 +1,17 @@
 <?php
-
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Debug\Debug;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+/**
+ * Front to the WordPress application. This file doesn't do anything, but loads
+ * wp-blog-header.php which does and tells WordPress to load the theme.
+ *
+ * @package WordPress
+ */
 
 /**
- * Retrieves or sets the Symfony Dependency Injection container
+ * Tells WordPress to load the WordPress theme and output it.
  *
- * @param ContainerInterface|string $id
- *
- * @return mixed
+ * @var bool
  */
-function symfony($id)
-{
-    static $container;
+define('WP_USE_THEMES', true);
 
-    if ($id instanceof ContainerInterface) {
-        $container = $id;
-        return;
-    }
-
-    return $container->get($id);
-}
-
-$loader = require __DIR__ . '/../../public/symfony/vendor/autoload.php';
-
-require_once __DIR__ . '/../../public/wordpress/wp-load.php';
-require_once __DIR__ . '/../../public/symfony/var/bootstrap.php.cache';
-
-// Load application kernel
-require_once __DIR__ . '/../../public/symfony/app/AppKernel.php';
-
-$sfKernel = new AppKernel('dev', true);
-$sfKernel->loadClassCache();
-$sfKernel->boot();
-
-// Add Symfony container as a global variable to be used in Wordpress
-$sfContainer = $sfKernel->getContainer();
-
-if (true === $sfContainer->getParameter('kernel.debug', false)) {
-    Debug::enable();
-}
-
-symfony($sfContainer);
-
-$sfRequest = Request::createFromGlobals();
-$sfResponse = $sfKernel->handle($sfRequest);
-$sfResponse->send();
-
-$sfKernel->terminate($sfRequest, $sfResponse);
+/** Loads the WordPress Environment and Template */
+require( dirname( __FILE__ ) . '/wp-blog-header.php' );

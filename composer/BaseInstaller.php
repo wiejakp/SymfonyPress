@@ -156,64 +156,89 @@ class BaseInstaller
         return $conf_array;
     }
 
-    public static function base_vendor_require(string $repository, string $version, ?string $directory = null)
+    public static function base_vendor_require(string $repository, string $version, string $directory = null)
     {
-        $isInstalled = self::base_vendor_check($repository);
-
         $composer = self::$COMPOSER;
-        $cmd_return = null;
+        $isInstalled = self::base_vendor_check($repository, $version, $directory);
+
+        var_dump('');
+        var_dump($repository);
+        var_dump('');
 
         if (!$isInstalled) {
-            $cmd_require = "php $composer require $repository:$version";
+            //$cmd_require = "php $composer require $repository:$version";
+            $cmd_require = "php $composer require $repository";
 
             if ($directory) {
+                $directory = rtrim($directory, '/');
                 $cmd_require .= " --working-dir='$directory'";
             }
 
-            $cmd_return = self::command($cmd_require);
+            self::command($cmd_require);
         }
-
-        return $cmd_return ? $cmd_return['code'] == 0 ? true : false : false;
     }
 
     public static function base_vendor_repository(array $repository, string $directory = null)
     {
         $composer = self::$COMPOSER;
 
-        $repo_title = $repository['title'];
+        $repo_vendor = $repository['user'];
+        $repo_bundle = $repository['title'];
+        $repo_name = $repo_vendor . '/' . $repo_bundle;
+        $repo_version = $repository['version'];
         $repo_json = json_encode([
             'type' => $repository['type'],
             'url' => $repository['url'],
             'version' => $repository['version'],
         ]);
 
-        $repo_exist = self::base_vendor_check($repo_title, '*', $directory);
+        $repo_exist = self::base_vendor_repository_check($repo_name, $repo_version, $directory);
 
         if (!$repo_exist) {
-            $cmd_repository = "php $composer config repositories.$repo_title '$repo_json'";
+            $cmd_repository = "php $composer config repositories.$repo_bundle '$repo_json'";
 
             if ($directory) {
-                $cmd_repository .= " --file='" . $directory . "composer.json'";
+                $directory = rtrim($directory, '/');
+                $cmd_repository .= " --working-dir='$directory' --file='" . $directory . "/composer.json'";
             }
 
             self::command($cmd_repository);
         }
     }
 
+    public static function base_vendor_repository_check(string $repository, string $version, string $directory = null)
+    {
+        $composer = self::$EVENT->getComposer();
+        $composerManager = $composer->getRepositoryManager();
+        $composerRepository = $composerManager->getLocalRepository();
+        $composerPackage = $composerRepository->findPackage($repository, $version);
+
+        if ($composerPackage) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static function base_vendor_check(string $repository, string $version = '*', string $directory = null): bool
     {
         $dir_composer = self::$COMPOSER;
-        $repository_string = "$repository/$version";
-        $cmd_search = "php $dir_composer search $repository_string";
+        //$repository_string = "$repository:$version";
+        $repository_string = "$repository";
+        $cmd_search = "php $dir_composer show $repository_string";
 
         if ($directory) {
+            $directory = rtrim($directory, '/');
             $cmd_search .= " --working-dir=$directory";
         }
 
         $return = self::command($cmd_search);
-        $result = $return['code'] == 0;
 
-        return $result;
+        var_dump('');
+        var_dump($return);
+        var_dump('');
+
+        return $return['code'] === 0 ? true : false;
     }
 
     public static function base_vendor_path(string $repository, string $version = '*'): ?string
