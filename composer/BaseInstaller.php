@@ -81,6 +81,10 @@ class BaseInstaller
     {
         array_walk(self::$BASE_DIRS, function (&$dir_path, $dir_name) {
             $dir_path = self::$BASE_ROOT . $dir_path;
+
+            if (!file_exists($dir_path)) {
+                self::dir_create($dir_path);
+            }
         });
     }
 
@@ -91,9 +95,9 @@ class BaseInstaller
 
     protected static function base_init_conf($class): ?iterable
     {
-        $conf_array = &self::$BASE_CONF;
-        $conf_file = self::$BASE_FILE;
-        $inout = self::$INOUT;
+        $conf_array = &$class::$BASE_CONF;
+        $conf_file = $class::$BASE_FILE;
+        $inout = $class::$INOUT;
 
         // if settings already exist, skip input prompts
         if (is_file($conf_file)) {
@@ -106,8 +110,8 @@ class BaseInstaller
 
         if (!$conf_array) {
             // store all user inputs
-            $params = &$conf['parameters'];
-            $project = &$conf['project'];
+            $params = &$conf_array['parameters'];
+            $project = &$conf_array['project'];
 
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
