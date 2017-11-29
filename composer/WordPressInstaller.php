@@ -36,17 +36,16 @@ class WordPressInstaller extends BaseInstaller
         self::dir_create(self::$DIR_PUBLIC);
     }
 
-    protected static function update()
+    protected static function check_install(string $path)
     {
-        // init script content
-        self::init();
-
         $wp_console = self::$CONSOLE;
         $wp_path = self::$DIR_PUBLIC;
 
-        $cmd_update = "$wp_console core update --path='$wp_path'";
+        $cmd_check = "$wp_console core is-installed --path='$wp_path'";
+        $cmd_return = self::command($cmd_check);
+        $cmd_status = $cmd_return['code'] == 0;
 
-        self::command($cmd_update);
+        return $cmd_status;
     }
 
     protected static function install()
@@ -54,10 +53,35 @@ class WordPressInstaller extends BaseInstaller
         // init script content
         self::init();
 
-        // init install script
-        self::install_required();
-        self::install_core();
-        self::install_shared();
+        $wp_path = self::$DIR_PUBLIC;
+        $installed = self::check_install($wp_path);
+
+        // init install script when script not installed
+        if (!$installed) {
+            self::install_required();
+            self::install_core();
+            self::install_shared();
+        }
+    }
+
+    protected static function update()
+    {
+        // init script content
+        self::init();
+
+        $wp_console = self::$CONSOLE;
+        $wp_path = self::$DIR_PUBLIC;
+        $installed = self::check_install($wp_path);
+
+        // init update when script is installed
+        // or install if installation not found
+        if ($installed) {
+            $cmd_update = "$wp_console core update --path='$wp_path'";
+
+            self::command($cmd_update);
+        } else {
+            self::install();
+        }
     }
 
     private static function install_required()

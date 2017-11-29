@@ -81,6 +81,10 @@ class BaseInstaller
     {
         array_walk(self::$BASE_DIRS, function (&$dir_path, $dir_name) {
             $dir_path = self::$BASE_ROOT . $dir_path;
+
+            if (!file_exists($dir_path)) {
+                self::dir_create($dir_path);
+            }
         });
     }
 
@@ -91,9 +95,9 @@ class BaseInstaller
 
     protected static function base_init_conf($class): ?iterable
     {
-        $conf_array = &self::$BASE_CONF;
-        $conf_file = self::$BASE_FILE;
-        $inout = self::$INOUT;
+        $conf_array = &$class::$BASE_CONF;
+        $conf_file = $class::$BASE_FILE;
+        $inout = $class::$INOUT;
 
         // if settings already exist, skip input prompts
         if (is_file($conf_file)) {
@@ -106,8 +110,8 @@ class BaseInstaller
 
         if (!$conf_array) {
             // store all user inputs
-            $params = &$conf['parameters'];
-            $project = &$conf['project'];
+            $params = &$conf_array['parameters'];
+            $project = &$conf_array['project'];
 
             // generate secret token
             $secret = uniqid('SymfonyPress_', true);
@@ -152,50 +156,59 @@ class BaseInstaller
         return $conf_array;
     }
 
-    public static function base_vendor_require(string $repository, string $version, ?string $directory = null)
+    public static function base_vendor_require(string $repository, string $version, string $directory = null)
     {
-        $isInstalled = self::base_vendor_check($repository);
-
         $composer = self::$COMPOSER;
-        $cmd_return = null;
+        $isInstalled = self::base_vendor_check($repository, $version, $directory);
+
+        var_dump('');
+        var_dump($repository);
+        var_dump('');
 
         if (!$isInstalled) {
-            $cmd_require = "php $composer require $repository:$version";
+            //$cmd_require = "php $composer require $repository:$version";
+            $cmd_require = "php $composer require $repository";
 
             if ($directory) {
+                $directory = rtrim($directory, '/');
                 $cmd_require .= " --working-dir='$directory'";
             }
 
-            $cmd_return = self::command($cmd_require);
+            self::command($cmd_require);
         }
-
-        return $cmd_return ? $cmd_return['code'] == 0 ? true : false : false;
     }
 
-    public static function base_vendor_repository(array $repository, ?string $directory = null)
+    public static function base_vendor_repository(array $repository, string $directory = null)
     {
         $composer = self::$COMPOSER;
 
-        $repo_title = $repository['title'];
+        $repo_vendor = $repository['user'];
+        $repo_bundle = $repository['title'];
+        $repo_name = $repo_vendor . '/' . $repo_bundle;
+        $repo_version = $repository['version'];
         $repo_json = json_encode([
             'type' => $repository['type'],
             'url' => $repository['url'],
             'version' => $repository['version'],
         ]);
 
-        $cmd_repository = "php $composer config repositories.$repo_title '$repo_json'";
+        $repo_exist = self::base_vendor_repository_check($repo_name, $repo_version, $directory);
 
-        if ($directory) {
-            $cmd_repository .= " --file='" . $directory . "composer.json'";
+        if (!$repo_exist) {
+            $cmd_repository = "php $composer config repositories.$repo_bundle '$repo_json'";
+
+            if ($directory) {
+                $directory = rtrim($directory, '/');
+                $cmd_repository .= " --working-dir='$directory' --file='" . $directory . "/composer.json'";
+            }
+
+            self::command($cmd_repository);
         }
-
-        self::command($cmd_repository);
     }
 
-    public static function base_vendor_check(string $repository = null, string $version = '*'): bool
+    public static function base_vendor_repository_check(string $repository, string $version, string $directory = null)
     {
         $composer = self::$EVENT->getComposer();
-
         $composerManager = $composer->getRepositoryManager();
         $composerRepository = $composerManager->getLocalRepository();
         $composerPackage = $composerRepository->findPackage($repository, $version);
@@ -207,7 +220,28 @@ class BaseInstaller
         return false;
     }
 
-    public static function base_vendor_path(string $repository = null, string $version = '*'): ?string
+    public static function base_vendor_check(string $repository, string $version = '*', string $directory = null): bool
+    {
+        $dir_composer = self::$COMPOSER;
+        //$repository_string = "$repository:$version";
+        $repository_string = "$repository";
+        $cmd_search = "php $dir_composer show $repository_string";
+
+        if ($directory) {
+            $directory = rtrim($directory, '/');
+            $cmd_search .= " --working-dir=$directory";
+        }
+
+        $return = self::command($cmd_search);
+
+        var_dump('');
+        var_dump($return);
+        var_dump('');
+
+        return $return['code'] === 0 ? true : false;
+    }
+
+    public static function base_vendor_path(string $repository, string $version = '*'): ?string
     {
         $composer = self::$EVENT->getComposer();
 
@@ -277,6 +311,60 @@ class BaseInstaller
         }
     }
 
+    public static function file_check(string $path)
+    {
+        $info = pathinfo($path);
+
+        $info_root = $info['dirname'];
+        $info_name = $info['filename'];
+        $info_base = $info['basename'];
+        $info_type = $info['extension'];
+
+        // can't continue without proper filename
+        if (empty($info_name) && empty($info_base) && empty($info_type)) {
+            return false;
+        }
+
+        // create root dir if doesn't exist
+        if (!is_dir($info_root) && !is_file($info_root)) {
+            self::dir_create($info_root);
+        }
+
+        return true;
+    }
+
+    public static function file_write(string $path, $data, bool $append = false)
+    {
+        $file = self::file_check($path);
+        $flag = $append ? FILE_APPEND : 0;
+        $string = is_string($data);
+        $array = function ($variable) use ($data) {
+            if (!is_array($variable)) {
+                return false;
+            }
+
+            foreach ($variable as $element) {
+                if (is_array($element)) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        // can't continue if path isn't file
+        if (!$file) {
+            return false;
+        }
+
+        // only write when data is string or simple array
+        if (!$string && !$array) {
+            return false;
+        }
+
+        return file_put_contents($path, $data, $flag) !== false;
+    }
+
     public static function file_list(string $path): iterable
     {
         $rdi = new RecursiveDirectoryIterator($path);
@@ -331,5 +419,40 @@ class BaseInstaller
         $command = "rm '$path'";
 
         return self::command($command);
+    }
+
+    public static function yaml_read(string $path): array
+    {
+        $yaml_array = [];
+
+        try {
+            $yaml_string = file_get_contents($path);
+            $yaml_array = Yaml::parse($yaml_string);
+        } catch (Exception $exception) {
+            self::$INOUT->write($exception->getMessage());
+
+            var_dump($exception);
+
+            die();
+        }
+
+        return $yaml_array;
+    }
+
+    public static function yaml_dump(array $data, int $levels = 10): ?string
+    {
+        $string_yaml = null;
+
+        try {
+            $string_yaml = Yaml::dump($data, $levels);
+        } catch (Exception $exception) {
+            self::$INOUT->write($exception->getMessage());
+
+            var_dump($exception);
+
+            die();
+        }
+
+        return $string_yaml;
     }
 }
