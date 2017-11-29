@@ -281,6 +281,60 @@ class BaseInstaller
         }
     }
 
+    public static function file_check(string $path)
+    {
+        $info = pathinfo($path);
+
+        $info_root = $info['dirname'];
+        $info_name = $info['filename'];
+        $info_base = $info['basename'];
+        $info_type = $info['extension'];
+
+        // can't continue without proper filename
+        if (empty($info_name) && empty($info_base) && empty($info_type)) {
+            return false;
+        }
+
+        // create root dir if doesn't exist
+        if (!is_dir($info_root) && !is_file($info_root)) {
+            self::dir_create($info_root);
+        }
+
+        return true;
+    }
+
+    public static function file_write(string $path, $data, bool $append = false)
+    {
+        $file = self::file_check($path);
+        $flag = $append ? FILE_APPEND : 0;
+        $string = is_string($data);
+        $array = function ($variable) use ($data) {
+            if (!is_array($variable)) {
+                return false;
+            }
+
+            foreach ($variable as $element) {
+                if (is_array($element)) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        // can't continue if path isn't file
+        if (!$file) {
+            return false;
+        }
+
+        // only write when data is string or simple array
+        if (!$string && !$array) {
+            return false;
+        }
+
+        return file_put_contents($path, $data, $flag) !== false;
+    }
+
     public static function file_list(string $path): iterable
     {
         $rdi = new RecursiveDirectoryIterator($path);
@@ -335,5 +389,40 @@ class BaseInstaller
         $command = "rm '$path'";
 
         return self::command($command);
+    }
+
+    public static function yaml_read(string $path): array
+    {
+        $yaml_array = [];
+
+        try {
+            $yaml_string = file_get_contents($path);
+            $yaml_array = Yaml::parse($yaml_string);
+        } catch (Exception $exception) {
+            self::$INOUT->write($exception->getMessage());
+
+            var_dump($exception);
+
+            die();
+        }
+
+        return $yaml_array;
+    }
+
+    public static function yaml_dump(array $data, int $levels = 10): ?string
+    {
+        $string_yaml = null;
+
+        try {
+            $string_yaml = Yaml::dump($data, $levels);
+        } catch (Exception $exception) {
+            self::$INOUT->write($exception->getMessage());
+
+            var_dump($exception);
+
+            die();
+        }
+
+        return $string_yaml;
     }
 }
