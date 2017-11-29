@@ -56,7 +56,7 @@ class SymfonyInstaller extends BaseInstaller
     {
         // init script content
         self::init();
-        
+
         if (!self::check_install()) {
             self::install();
         }
@@ -123,7 +123,9 @@ class SymfonyInstaller extends BaseInstaller
         foreach ($files as $target) {
             $symlink = str_replace(self::$DIR_PRIVATE, self::$DIR_PUBLIC, $target);
 
-            self::symlink_create($target, $symlink);
+            if (!file_exists($symlink) || !is_link($symlink) || realpath($symlink) != $target) {
+                self::symlink_create($target, $symlink);
+            }
         }
     }
 
@@ -156,7 +158,9 @@ class SymfonyInstaller extends BaseInstaller
         foreach ($files as $target) {
             $symlink = str_replace(self::$DIR_SHARED, self::$DIR_PUBLIC, $target);
 
-            self::symlink_create($target, $symlink);
+            if(!file_exists($symlink) || !is_link($symlink) || realpath($symlink) != $target) {
+                self::symlink_create($target, $symlink);
+            }
         }
     }
 
@@ -183,9 +187,12 @@ class SymfonyInstaller extends BaseInstaller
             $array_dst = self::yaml_read($file_destination);
 
             $yaml_array = array_merge($array_dst, $array_src);
-            $yaml_string = self::yaml_dump($yaml_array);
 
-            self::file_write($file_destination, $yaml_string);
+            if($yaml_array != $array_src) {
+                $yaml_string = self::yaml_dump($yaml_array);
+
+                self::file_write($file_destination, $yaml_string);
+            }
         }
     }
 

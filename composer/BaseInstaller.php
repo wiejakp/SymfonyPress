@@ -176,7 +176,7 @@ class BaseInstaller
         return $cmd_return ? $cmd_return['code'] == 0 ? true : false : false;
     }
 
-    public static function base_vendor_repository(array $repository, ?string $directory = null)
+    public static function base_vendor_repository(array $repository, string $directory = null)
     {
         $composer = self::$COMPOSER;
 
@@ -187,31 +187,36 @@ class BaseInstaller
             'version' => $repository['version'],
         ]);
 
-        $cmd_repository = "php $composer config repositories.$repo_title '$repo_json'";
+        $repo_exist = self::base_vendor_check($repo_title, '*', $directory);
+
+        if (!$repo_exist) {
+            $cmd_repository = "php $composer config repositories.$repo_title '$repo_json'";
+
+            if ($directory) {
+                $cmd_repository .= " --file='" . $directory . "composer.json'";
+            }
+
+            self::command($cmd_repository);
+        }
+    }
+
+    public static function base_vendor_check(string $repository, string $version = '*', string $directory = null): bool
+    {
+        $dir_composer = self::$COMPOSER;
+        $repository_string = "$repository/$version";
+        $cmd_search = "php $dir_composer search $repository_string";
 
         if ($directory) {
-            $cmd_repository .= " --file='" . $directory . "composer.json'";
+            $cmd_search .= " --working-dir=$directory";
         }
 
-        self::command($cmd_repository);
+        $return = self::command($cmd_search);
+        $result = $return['code'] == 0;
+
+        return $result;
     }
 
-    public static function base_vendor_check(string $repository = null, string $version = '*'): bool
-    {
-        $composer = self::$EVENT->getComposer();
-
-        $composerManager = $composer->getRepositoryManager();
-        $composerRepository = $composerManager->getLocalRepository();
-        $composerPackage = $composerRepository->findPackage($repository, $version);
-
-        if ($composerPackage) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static function base_vendor_path(string $repository = null, string $version = '*'): ?string
+    public static function base_vendor_path(string $repository, string $version = '*'): ?string
     {
         $composer = self::$EVENT->getComposer();
 
